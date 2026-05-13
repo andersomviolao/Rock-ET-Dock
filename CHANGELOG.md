@@ -2,6 +2,12 @@
 
 Todas as mudancas relevantes deste projeto serao documentadas aqui.
 
+## 0.2.2 - 2026-05-13
+
+- Definida versao do app como `0.2.2`.
+- Ajustado `installer/build-installer.ps1` para gerar somente o instalador oficial.
+- Atualizada a documentacao para evitar distribuicao do pacote zip manual.
+
 ## 0.2.1 - 2026-05-13
 
 - Adicionado script de instalador Inno Setup/ISCC em `installer/RockETDock.iss`.

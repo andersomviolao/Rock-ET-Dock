@@ -9,8 +9,7 @@ Workspace para recriar um dock/app launcher moderno inspirado no RocketDock.
 - Target: `.NET 10`, `net10.0-windows`
 - Build: `dotnet build Dock.slnx`
 - Run: `dotnet run --project src/Dock.App/Dock.App.csproj`
-- Pacote release: `dotnet publish src/Dock.App/Dock.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true`
-- Instalador: `powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1`
+- Release: `powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1`
 - Validar geometria das quatro bordas: `dotnet run --project tests/Dock.GeometryChecks/Dock.GeometryChecks.csproj`
 
 ## Contrato de dados

@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "0.2.1"
+    [string]$Version = "0.2.2"
 )
 
 $ErrorActionPreference = "Stop"
@@ -7,7 +7,6 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $publishDir = Join-Path $repoRoot "artifacts\publish\Rock-ET-Dock-$Version-win-x64"
 $installerDir = Join-Path $repoRoot "artifacts\installer"
-$zipPath = Join-Path $repoRoot "artifacts\Rock-ET-Dock-$Version-win-x64.zip"
 $scriptPath = Join-Path $PSScriptRoot "RockETDock.iss"
 
 $iscc = Get-Command "iscc.exe" -ErrorAction SilentlyContinue
@@ -47,10 +46,4 @@ Copy-Item "LICENSE", "README.md", "CHANGELOG.md", "documentation.md" -Destinatio
 New-Item -ItemType Directory -Force $installerDir | Out-Null
 & $isccPath "/DAppVersion=$Version" $scriptPath
 
-if (Test-Path $zipPath) {
-    Remove-Item -Force $zipPath
-}
-
-Compress-Archive -Path $publishDir -DestinationPath $zipPath -CompressionLevel Optimal
-
-Get-Item (Join-Path $installerDir "Rock-ET-Dock-Setup-$Version-win-x64.exe"), $zipPath
+Get-Item (Join-Path $installerDir "Rock-ET-Dock-Setup-$Version-win-x64.exe")
