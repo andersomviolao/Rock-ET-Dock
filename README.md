@@ -58,7 +58,7 @@ The installer is the intended distribution path. The app is self-contained, so t
 
 Right-click the dock and open **Dock settings**.
 
-- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, move modifier key, and managed dock folder.
+- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, move modifier key, GIF modifier key, and managed dock folder.
 - **Icons:** size, opacity, labels, spacing, bottom margin, quality, hover magnification, magnification range, and animated GIF items.
 - **Position:** monitor, screen edge, layering, width, height, edge distance, and center offset.
 - **Style:** themes, background opacity, dock radius, icon tile radius, font, font size, and label color.
@@ -75,7 +75,7 @@ Rock ET Dock is intentionally per-user:
 - Managed dock root: `%USERPROFILE%\Rock ET Dock`
 - Managed folder per dock: `%USERPROFILE%\Rock ET Dock\<dock-name>`
 
-When you drop a file or folder onto the dock, Rock ET Dock creates a shortcut in the managed dock folder by default. Hold the configured move modifier key, `Shift` by default, to move the item into the dock folder instead. Dragging an item out of the dock removes the dock shortcut by default; holding the move modifier moves app-managed dock files back out.
+When you drop a file or folder onto the dock, Rock ET Dock creates a shortcut in the managed dock folder by default. Hold the configured move modifier key, `Shift` by default, to move the item into the dock folder instead. Hold the configured GIF modifier key, `Alt` by default, while dropping `.gif` files to add them as looping animated dock items. Dragging an item out of the dock removes the dock shortcut by default; holding the move modifier moves app-managed dock files back out.
 
 ## Build From Source
 

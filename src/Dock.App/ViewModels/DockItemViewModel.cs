@@ -59,6 +59,8 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
 
     public Visibility AnimatedGifVisibility => IsAnimatedGif ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility ButtonVisibility => IsDropPlaceholder ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility ContentVisibility => IsDropPlaceholder || IsSeparator ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility SeparatorVisibility => IsSeparator ? Visibility.Visible : Visibility.Collapsed;

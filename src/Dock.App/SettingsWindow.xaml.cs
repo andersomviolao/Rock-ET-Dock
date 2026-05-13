@@ -160,7 +160,7 @@ public partial class SettingsWindow : Window
 
         foreach (var comboBox in new[]
                  {
-                     LanguageBox, MoveModifierBox, IconQualityBox, HoverEffectBox, MonitorBox,
+                     LanguageBox, MoveModifierBox, GifModifierBox, IconQualityBox, HoverEffectBox, MonitorBox,
                      EdgeBox, LayeringBox
                  })
         {
@@ -236,6 +236,7 @@ public partial class SettingsWindow : Window
             app.HideNativeTaskbar = HideNativeTaskbarBox.IsChecked == true;
             _bar.ImportMode = DockImportMode.CreateShortcutInBarFolder;
             _bar.MoveModifierKey = SelectedEnum(MoveModifierBox, _bar.MoveModifierKey);
+            _bar.GifModifierKey = SelectedEnum(GifModifierBox, _bar.GifModifierKey);
             _bar.AutoHideDelayMs = (int)AutoHideDelaySlider.Value;
             _bar.AutoHideDurationMs = (int)AutoHideDurationSlider.Value;
 
@@ -385,6 +386,7 @@ public partial class SettingsWindow : Window
             LanguageBox.ItemsSource = TextCatalog.LanguageOptions;
             LanguageBox.SelectedValue = text.LanguageCode;
             SetEnumItems(MoveModifierBox, EnumItems<DockMoveModifierKey>(text), _bar.MoveModifierKey);
+            SetEnumItems(GifModifierBox, EnumItems<DockMoveModifierKey>(text), _bar.GifModifierKey);
             SetEnumItems(IconQualityBox, EnumItems<IconQuality>(text), _bar.IconQuality);
             SetEnumItems(HoverEffectBox, EnumItems<HoverEffect>(text), _bar.HoverEffect);
             SetEnumItems(EdgeBox, EnumItems<DockEdge>(text), _bar.Edge);

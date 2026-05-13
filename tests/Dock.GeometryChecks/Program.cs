@@ -205,6 +205,7 @@ void ValidateDefaultDockItems()
     var bar = new DockBarSettings();
     AssertTrue(bar.ImportMode == DockImportMode.CreateShortcutInBarFolder, "shortcut creation should be the default import behavior");
     AssertTrue(bar.MoveModifierKey == DockMoveModifierKey.Shift, "Shift should be the default move modifier");
+    AssertTrue(bar.GifModifierKey == DockMoveModifierKey.Alt, "Alt should be the default looping GIF modifier");
 }
 
 void ValidateLegacySpecialItemsAreRemovedOnLoad()
@@ -597,6 +598,7 @@ void ValidatePlaceholderIsGapOnly()
     });
 
     AssertTrue(placeholder.ContentVisibility == System.Windows.Visibility.Collapsed, "drop placeholder should render as empty gap");
+    AssertTrue(placeholder.ButtonVisibility == System.Windows.Visibility.Collapsed, "drop placeholder should not consume a fixed layout slot");
 }
 
 void ValidateLocalization()

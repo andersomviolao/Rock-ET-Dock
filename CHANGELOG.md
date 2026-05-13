@@ -9,8 +9,12 @@ All notable changes to this project are documented here.
 - Removed the dock item versions of Settings and Exit; those actions remain in the dock context menu.
 - Changed first-run defaults to Windows, Windows Settings, File Explorer, Microsoft Edge, and Recycle Bin.
 - Changed drag-and-drop defaults so dropping into the dock creates shortcuts and dragging out removes dock shortcuts; holding the configurable move modifier, `Shift` by default, performs managed file moves.
+- Added a configurable GIF drop modifier, `Alt` by default, that imports dropped `.gif` files as looping animated dock items.
 - Added distinct drag animations for move actions and remove-from-dock actions.
+- Refined drop feedback with short opacity/scale pulses and separate accent colors for shortcut, move, and looping GIF imports.
+- Refined drag-out feedback so removing a shortcut fades and shrinks differently from moving a managed file out of the dock folder.
 - Fixed first-run Windows Settings and File Explorer items so they launch through Windows shell commands instead of being treated as ordinary running app executables.
+- Stabilized drag-in spacing so nearby items open symmetrically around the drop position without rapid back-and-forth layout jitter.
 
 ## 0.3.0 - 2026-05-13
 

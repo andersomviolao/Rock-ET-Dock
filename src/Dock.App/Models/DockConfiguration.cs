@@ -61,6 +61,8 @@ public sealed class DockBarSettings
 
     public DockMoveModifierKey MoveModifierKey { get; set; } = DockMoveModifierKey.Shift;
 
+    public DockMoveModifierKey GifModifierKey { get; set; } = DockMoveModifierKey.Alt;
+
     public int AutoHideDelayMs { get; set; } = 500;
 
     public int AutoHideDurationMs { get; set; } = 180;

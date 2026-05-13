@@ -53,6 +53,7 @@ public partial class MainWindow : Window
     private bool _isCompletingReorderDrag;
     private string? _draggedItemId;
     private int _dragStartIndex = -1;
+    private int _externalDropVisualIndex = -1;
     private DateTime _suppressClickUntilUtc;
     private bool _isOpeningNativeWindowsMenu;
     private bool _windowsButtonStartWasOpenOnMouseDown;
@@ -902,7 +903,7 @@ public partial class MainWindow : Window
             UpdateExternalDropPlaceholderFromPointer(e.GetPosition(DockItemsControl));
         }
 
-        e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates));
+        e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates), IsGifModifierPressed(e.KeyStates));
         e.Handled = true;
     }
 
@@ -918,7 +919,7 @@ public partial class MainWindow : Window
             UpdateExternalDropPlaceholderFromPointer(e.GetPosition(DockItemsControl));
         }
 
-        e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates));
+        e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates), IsGifModifierPressed(e.KeyStates));
         e.Handled = true;
     }
 
@@ -951,23 +952,29 @@ public partial class MainWindow : Window
             {
                 var insertionIndex = GetExternalDropInsertionIndex();
                 var importMode = GetImportMode(e.KeyStates);
-                RemoveExternalDropPlaceholder();
-                var insertedItems = new List<DockItem>();
+                var importAnimatedGifs = IsGifModifierPressed(e.KeyStates);
+                RemoveExternalDropPlaceholder(animated: false);
+                var insertedItems = new List<(DockItem Item, DockItemArrivalAnimation Animation)>();
                 foreach (var path in paths)
                 {
-                    var item = _importer.ImportFileSystemPath(_bar, path, importMode);
+                    var importAsAnimatedGif = ShouldImportAsAnimatedGif(path, importAnimatedGifs);
+                    var item = importAsAnimatedGif
+                        ? _importer.ImportAnimatedGif(_bar, path)
+                        : _importer.ImportFileSystemPath(_bar, path, importMode);
                     _viewModel.InsertItem(insertionIndex++, item);
-                    insertedItems.Add(item);
+                    insertedItems.Add((item, importAsAnimatedGif
+                        ? DockItemArrivalAnimation.LoopingGif
+                        : GetArrivalAnimation(importMode)));
                 }
 
                 _store.Save();
                 PositionDock();
-                foreach (var item in insertedItems)
+                foreach (var (item, animation) in insertedItems)
                 {
-                    AnimateItemArrival(item.Id, GetArrivalAnimation(importMode));
+                    AnimateItemArrival(item.Id, animation);
                 }
 
-                e.Effects = GetDockDropEffect(e.Data, importMode);
+                e.Effects = GetDockDropEffect(e.Data, importMode, importAnimatedGifs);
                 e.Handled = true;
                 return;
             }
@@ -975,7 +982,7 @@ public partial class MainWindow : Window
             if (TryGetUri(e.Data, out var uri))
             {
                 var insertionIndex = GetExternalDropInsertionIndex();
-                RemoveExternalDropPlaceholder();
+                RemoveExternalDropPlaceholder(animated: false);
                 var item = _importer.ImportUrl(_bar, uri);
                 _viewModel.InsertItem(insertionIndex, item);
                 _store.Save();
@@ -987,7 +994,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            RemoveExternalDropPlaceholder();
+            RemoveExternalDropPlaceholder(animated: false);
             System.Windows.MessageBox.Show(this, ex.Message, UserPaths.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1005,7 +1012,7 @@ public partial class MainWindow : Window
         if (!_bar.LockItems && CanImport(e.Data))
         {
             UpdateExternalDropPlaceholderFromPointer(e.GetPosition(DockItemsControl));
-            e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates));
+            e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates), IsGifModifierPressed(e.KeyStates));
             e.Handled = true;
             return;
         }
@@ -1123,9 +1130,14 @@ public partial class MainWindow : Window
     private void UpdateExternalDropPlaceholderFromPointer(Point pointer)
     {
         var insertionIndex = GetExternalDropVisualInsertionIndex(pointer);
-        AnimateReorderChange(
-            () => _viewModel.SetDropPlaceholderVisualIndex(insertionIndex),
-            DockBarViewModel.DropPlaceholderId);
+        if (_externalDropVisualIndex == insertionIndex && _viewModel.DropPlaceholderIndex >= 0)
+        {
+            return;
+        }
+
+        _externalDropVisualIndex = insertionIndex;
+        _viewModel.SetDropPlaceholderVisualIndex(insertionIndex);
+        ApplyExternalDropGap(insertionIndex, animated: true);
     }
 
     private int GetVisualInsertionIndex(Point pointer)
@@ -1188,11 +1200,71 @@ public partial class MainWindow : Window
         return index < 0 ? _viewModel.Items.Count : index;
     }
 
-    private void RemoveExternalDropPlaceholder()
+    private void ApplyExternalDropGap(int insertionIndex, bool animated)
     {
-        AnimateReorderChange(
-            () => _viewModel.RemoveDropPlaceholder() >= 0,
-            DockBarViewModel.DropPlaceholderId);
+        DockItemsControl.UpdateLayout();
+
+        var visualIndex = 0;
+        var gapOffset = GetExternalDropGapOffset(insertionIndex >= 0);
+        foreach (var presenter in FindDockItemPresenters(DockItemsControl))
+        {
+            if (presenter.Content is not DockItemViewModel itemViewModel ||
+                itemViewModel.IsDropPlaceholder)
+            {
+                continue;
+            }
+
+            var primaryOffset = insertionIndex < 0
+                ? 0
+                : visualIndex < insertionIndex ? -gapOffset : gapOffset;
+            AnimatePresenterOffset(presenter, primaryOffset, animated);
+            visualIndex++;
+        }
+    }
+
+    private double GetExternalDropGapOffset(bool hasOpenGap)
+    {
+        if (!hasOpenGap)
+        {
+            return 0;
+        }
+
+        var slotStep = Math.Max(1, _viewModel.ItemButtonSize + Math.Max(0, _bar.IconSpacing));
+        return slotStep / 2.0;
+    }
+
+    private void AnimatePresenterOffset(ContentPresenter presenter, double primaryOffset, bool animated)
+    {
+        var translate = EnsurePresenterTranslate(presenter);
+        var targetX = IsVerticalDock ? 0 : primaryOffset;
+        var targetY = IsVerticalDock ? primaryOffset : 0;
+
+        if (!animated)
+        {
+            translate.BeginAnimation(TranslateTransform.XProperty, null);
+            translate.BeginAnimation(TranslateTransform.YProperty, null);
+            translate.X = targetX;
+            translate.Y = targetY;
+            return;
+        }
+
+        var duration = TimeSpan.FromMilliseconds(135);
+        var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+        translate.BeginAnimation(
+            TranslateTransform.XProperty,
+            new DoubleAnimation(targetX, duration) { EasingFunction = easing },
+            HandoffBehavior.SnapshotAndReplace);
+        translate.BeginAnimation(
+            TranslateTransform.YProperty,
+            new DoubleAnimation(targetY, duration) { EasingFunction = easing },
+            HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private void RemoveExternalDropPlaceholder(bool animated = true)
+    {
+        _externalDropVisualIndex = -1;
+        _viewModel.RemoveDropPlaceholder();
+        ApplyExternalDropGap(insertionIndex: -1, animated);
     }
 
     private bool MoveDraggedPlaceholderToVisualIndex(int visualInsertionIndex)
@@ -1521,21 +1593,17 @@ public partial class MainWindow : Window
             translate.BeginAnimation(TranslateTransform.YProperty, null);
             button.BeginAnimation(OpacityProperty, null);
 
-            var duration = TimeSpan.FromMilliseconds(animation == DockItemArrivalAnimation.MoveIn ? 230 : 170);
-            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-            var moveOffset = animation == DockItemArrivalAnimation.MoveIn ? GetMoveAnimationOffset(20) : new Vector();
-
-            scale.ScaleX = animation == DockItemArrivalAnimation.MoveIn ? 0.72 : 0.88;
-            scale.ScaleY = scale.ScaleX;
-            translate.X = moveOffset.X;
-            translate.Y = moveOffset.Y;
-            button.Opacity = 0.0;
+            var duration = GetArrivalDuration(animation);
+            scale.ScaleX = 1.0;
+            scale.ScaleY = 1.0;
+            translate.X = 0;
+            translate.Y = 0;
+            button.Opacity = 1.0;
 
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, CreateArrivalScaleAnimation(animation));
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, CreateArrivalScaleAnimation(animation));
-            translate.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, duration) { EasingFunction = ease });
-            translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, duration) { EasingFunction = ease });
-            button.BeginAnimation(OpacityProperty, new DoubleAnimation(1.0, duration) { EasingFunction = ease });
+            AnimateArrivalIconOpacity(button, duration);
+            AnimateArrivalAccent(button, animation, duration);
         }, DispatcherPriority.Loaded);
     }
 
@@ -1553,9 +1621,9 @@ public partial class MainWindow : Window
             preview.RenderTransform = scale;
         }
 
-        var duration = TimeSpan.FromMilliseconds(animation == DockDragExitAnimation.MoveOut ? 190 : 160);
+        var duration = TimeSpan.FromMilliseconds(animation == DockDragExitAnimation.MoveOut ? 175 : 135);
         var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
-        var targetScale = animation == DockDragExitAnimation.MoveOut ? 1.18 : 0.38;
+        var targetScale = animation == DockDragExitAnimation.MoveOut ? 0.62 : 0.34;
         var glowColor = animation == DockDragExitAnimation.MoveOut
             ? Color.FromRgb(80, 180, 255)
             : Color.FromRgb(255, 80, 96);
@@ -1583,6 +1651,92 @@ public partial class MainWindow : Window
         return true;
     }
 
+    private void AnimateArrivalIconOpacity(Button button, TimeSpan duration)
+    {
+        foreach (var image in FindVisualChildren<Image>(button))
+        {
+            image.BeginAnimation(OpacityProperty, null);
+            image.BeginAnimation(
+                OpacityProperty,
+                new DoubleAnimation
+                {
+                    From = 1.0,
+                    To = _viewModel.ItemOpacity,
+                    Duration = duration,
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.Stop
+                },
+                HandoffBehavior.SnapshotAndReplace);
+        }
+    }
+
+    private static void AnimateArrivalAccent(Button button, DockItemArrivalAnimation animation, TimeSpan duration)
+    {
+        var accentColor = GetArrivalAccentColor(animation);
+        var accentBrush = new SolidColorBrush(accentColor)
+        {
+            Opacity = animation == DockItemArrivalAnimation.Shortcut ? 0.28 : 0.46
+        };
+        var glow = new DropShadowEffect
+        {
+            BlurRadius = animation == DockItemArrivalAnimation.Shortcut ? 16 : 24,
+            Color = accentColor,
+            Opacity = animation == DockItemArrivalAnimation.Shortcut ? 0.34 : 0.68,
+            ShadowDepth = 0
+        };
+
+        button.Background = accentBrush;
+        button.Effect = glow;
+
+        var brushFade = new DoubleAnimation(0.0, duration)
+        {
+            BeginTime = TimeSpan.FromMilliseconds(45),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        brushFade.Completed += (_, _) =>
+        {
+            if (ReferenceEquals(button.Background, accentBrush))
+            {
+                button.Background = Brushes.Transparent;
+            }
+        };
+
+        var glowFade = new DoubleAnimation(0.0, duration)
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        glowFade.Completed += (_, _) =>
+        {
+            if (ReferenceEquals(button.Effect, glow))
+            {
+                button.Effect = null;
+            }
+        };
+
+        accentBrush.BeginAnimation(Brush.OpacityProperty, brushFade, HandoffBehavior.SnapshotAndReplace);
+        glow.BeginAnimation(DropShadowEffect.OpacityProperty, glowFade, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private static Color GetArrivalAccentColor(DockItemArrivalAnimation animation)
+    {
+        return animation switch
+        {
+            DockItemArrivalAnimation.LoopingGif => Color.FromRgb(174, 91, 255),
+            DockItemArrivalAnimation.MoveIn => Color.FromRgb(255, 176, 64),
+            _ => Color.FromRgb(110, 190, 255)
+        };
+    }
+
+    private static TimeSpan GetArrivalDuration(DockItemArrivalAnimation animation)
+    {
+        return TimeSpan.FromMilliseconds(animation switch
+        {
+            DockItemArrivalAnimation.LoopingGif => 220,
+            DockItemArrivalAnimation.MoveIn => 205,
+            _ => 165
+        });
+    }
+
     private static DoubleAnimationUsingKeyFrames CreateArrivalScaleAnimation(DockItemArrivalAnimation animation)
     {
         if (animation == DockItemArrivalAnimation.MoveIn)
@@ -1591,9 +1745,22 @@ public partial class MainWindow : Window
             {
                 KeyFrames =
                 {
-                    new EasingDoubleKeyFrame(1.13, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(95)), new CubicEase { EasingMode = EasingMode.EaseOut }),
-                    new EasingDoubleKeyFrame(0.98, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(165)), new CubicEase { EasingMode = EasingMode.EaseInOut }),
-                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(230)), new CubicEase { EasingMode = EasingMode.EaseOut })
+                    new EasingDoubleKeyFrame(1.12, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(70)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                    new EasingDoubleKeyFrame(0.97, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(135)), new CubicEase { EasingMode = EasingMode.EaseInOut }),
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(GetArrivalDuration(animation)), new CubicEase { EasingMode = EasingMode.EaseOut })
+                }
+            };
+        }
+
+        if (animation == DockItemArrivalAnimation.LoopingGif)
+        {
+            return new DoubleAnimationUsingKeyFrames
+            {
+                KeyFrames =
+                {
+                    new EasingDoubleKeyFrame(1.15, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(75)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                    new EasingDoubleKeyFrame(0.98, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(145)), new CubicEase { EasingMode = EasingMode.EaseInOut }),
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(GetArrivalDuration(animation)), new CubicEase { EasingMode = EasingMode.EaseOut })
                 }
             };
         }
@@ -1602,20 +1769,10 @@ public partial class MainWindow : Window
         {
             KeyFrames =
             {
-                new EasingDoubleKeyFrame(1.04, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(80)), new CubicEase { EasingMode = EasingMode.EaseOut }),
-                new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(170)), new CubicEase { EasingMode = EasingMode.EaseOut })
+                new EasingDoubleKeyFrame(1.08, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(60)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                new EasingDoubleKeyFrame(0.99, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(115)), new CubicEase { EasingMode = EasingMode.EaseInOut }),
+                new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(GetArrivalDuration(animation)), new CubicEase { EasingMode = EasingMode.EaseOut })
             }
-        };
-    }
-
-    private Vector GetMoveAnimationOffset(double distance)
-    {
-        return _bar.Edge switch
-        {
-            DockEdge.Top => new Vector(0, -distance),
-            DockEdge.Left => new Vector(-distance, 0),
-            DockEdge.Right => new Vector(distance, 0),
-            _ => new Vector(0, distance)
         };
     }
 
@@ -1638,6 +1795,13 @@ public partial class MainWindow : Window
             : DockImportMode.CreateShortcutInBarFolder;
     }
 
+    private static bool ShouldImportAsAnimatedGif(string path, bool gifModifierPressed)
+    {
+        return gifModifierPressed &&
+               File.Exists(path) &&
+               Path.GetExtension(path).Equals(".gif", StringComparison.OrdinalIgnoreCase);
+    }
+
     private DockItemArrivalAnimation GetArrivalAnimation(DockImportMode importMode)
     {
         return importMode == DockImportMode.MoveToBarFolder
@@ -1647,8 +1811,22 @@ public partial class MainWindow : Window
 
     private bool IsMoveModifierPressed()
     {
-        var modifiers = Keyboard.Modifiers;
-        return _bar.MoveModifierKey switch
+        return IsModifierPressed(_bar.MoveModifierKey, Keyboard.Modifiers);
+    }
+
+    private bool IsMoveModifierPressed(System.Windows.DragDropKeyStates keyStates)
+    {
+        return IsModifierPressed(_bar.MoveModifierKey, keyStates);
+    }
+
+    private bool IsGifModifierPressed(System.Windows.DragDropKeyStates keyStates)
+    {
+        return IsModifierPressed(_bar.GifModifierKey, keyStates);
+    }
+
+    private static bool IsModifierPressed(DockMoveModifierKey modifierKey, ModifierKeys modifiers)
+    {
+        return modifierKey switch
         {
             DockMoveModifierKey.Control => modifiers.HasFlag(ModifierKeys.Control),
             DockMoveModifierKey.Alt => modifiers.HasFlag(ModifierKeys.Alt),
@@ -1656,9 +1834,9 @@ public partial class MainWindow : Window
         };
     }
 
-    private bool IsMoveModifierPressed(System.Windows.DragDropKeyStates keyStates)
+    private static bool IsModifierPressed(DockMoveModifierKey modifierKey, System.Windows.DragDropKeyStates keyStates)
     {
-        return _bar.MoveModifierKey switch
+        return modifierKey switch
         {
             DockMoveModifierKey.Control => keyStates.HasFlag(System.Windows.DragDropKeyStates.ControlKey),
             DockMoveModifierKey.Alt => keyStates.HasFlag(System.Windows.DragDropKeyStates.AltKey),
@@ -1666,7 +1844,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private System.Windows.DragDropEffects GetDockDropEffect(System.Windows.IDataObject data, DockImportMode importMode)
+    private System.Windows.DragDropEffects GetDockDropEffect(System.Windows.IDataObject data, DockImportMode importMode, bool gifModifierPressed)
     {
         if (_bar.LockItems)
         {
@@ -1680,6 +1858,11 @@ public partial class MainWindow : Window
 
         if (data.GetDataPresent(System.Windows.DataFormats.FileDrop))
         {
+            if (gifModifierPressed && HasGifFileDrop(data))
+            {
+                return System.Windows.DragDropEffects.Link;
+            }
+
             return importMode == DockImportMode.CreateShortcutInBarFolder
                 ? System.Windows.DragDropEffects.Link
                 : System.Windows.DragDropEffects.Move;
@@ -1688,6 +1871,14 @@ public partial class MainWindow : Window
         return TryGetUri(data, out _)
             ? System.Windows.DragDropEffects.Link
             : System.Windows.DragDropEffects.None;
+    }
+
+    private static bool HasGifFileDrop(System.Windows.IDataObject data)
+    {
+        return data.GetDataPresent(System.Windows.DataFormats.FileDrop) &&
+               data.GetData(System.Windows.DataFormats.FileDrop) is string[] paths &&
+               paths.Any(static path => File.Exists(path) &&
+                                        Path.GetExtension(path).Equals(".gif", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool TryGetUri(System.Windows.IDataObject data, out Uri uri)
@@ -2515,6 +2706,23 @@ public partial class MainWindow : Window
         return null;
     }
 
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, index);
+            if (child is T typedChild)
+            {
+                yield return typedChild;
+            }
+
+            foreach (var descendant in FindVisualChildren<T>(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
     private static Button? FindDockItemButtonById(DependencyObject parent, string itemId)
     {
         for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
@@ -2609,7 +2817,8 @@ public partial class MainWindow : Window
     private enum DockItemArrivalAnimation
     {
         Shortcut,
-        MoveIn
+        MoveIn,
+        LoopingGif
     }
 
     private enum DockDragExitAnimation

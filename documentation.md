@@ -72,6 +72,7 @@ dotnet run --project src\Dock.App\Dock.App.csproj
 
 - The project is clean-room: behavior and formats are documented, but runtime code and assets are project-owned.
 - Dropped files and folders are referenced through shortcuts in the managed dock folder by default. Holding the configured move modifier key, `Shift` by default, moves the source into the dock folder instead.
+- Dropped `.gif` files become looping animated dock items when the configured GIF modifier key, `Alt` by default, is held during the drop.
 - Dragging an item out of the dock removes only the dock shortcut by default. Holding the move modifier moves app-managed dock files out of the dock folder when the item has a managed backing file.
 - File-system move/copy rules are centralized in `ManagedPathService`; shortcut creation and resolution are centralized in `ShellShortcutService`.
 - Special shell-backed items stay separate from normal file-system items. Recycle Bin and Windows button behavior uses dedicated services.

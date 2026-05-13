@@ -79,6 +79,7 @@ public sealed class DockConfigurationStore
         var bar = DockBarSettings.Create(name, DockEdge.Bottom);
         bar.ImportMode = DockImportMode.CreateShortcutInBarFolder;
         bar.MoveModifierKey = DockMoveModifierKey.Shift;
+        bar.GifModifierKey = DockMoveModifierKey.Alt;
 
         foreach (var item in DefaultDockItemFactory.CreateInitialItems(text))
         {

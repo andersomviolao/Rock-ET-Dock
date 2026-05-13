@@ -69,6 +69,13 @@
                                   Margin="0,4,0,12"
                                   SelectedValuePath="Value" />
 
+                        <TextBlock Margin="0,10,0,0"
+                                   Text="{Binding Text[SettingsGifModifierKey]}"
+                                   TextWrapping="Wrap" />
+                        <ComboBox x:Name="GifModifierBox"
+                                  Margin="0,4,0,12"
+                                  SelectedValuePath="Value" />
+
                         <TextBlock Margin="0,10,0,0" Text="{Binding Text[SettingsAutoHideDelay]}" />
                         <Slider x:Name="AutoHideDelaySlider"
                                 Minimum="0"
