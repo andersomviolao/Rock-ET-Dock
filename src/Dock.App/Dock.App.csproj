@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>false</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Rock ET Dock</AssemblyName>
+    <Product>Rock ET Dock</Product>
+    <Description>A per-user customizable dock for Windows.</Description>
+    <ApplicationIcon>Assets\rock-et-dock-icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\rock-et-dock-icon.ico" />
+    <Resource Include="Assets\rock-et-dock-icon.png" />
+  </ItemGroup>
+
+</Project>

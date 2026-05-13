@@ -1,0 +1,74 @@
+<UserControl x:Class="Dock.App.Controls.BrandLogo"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="64"
+             Height="64">
+    <Viewbox Stretch="Uniform">
+        <Canvas Width="256" Height="256">
+            <Path Fill="#22B94F"
+                  Stroke="#020403"
+                  StrokeLineJoin="Round"
+                  StrokeThickness="11"
+                  Data="M36,99 C42,55 83,23 134,20 C184,17 223,42 237,82 C245,108 238,158 214,201 C193,240 159,257 126,249 C90,240 53,202 38,161 C30,139 29,117 36,99 Z" />
+            <Path Fill="#5FF083"
+                  Opacity="0.38"
+                  Data="M55,95 C67,58 104,35 147,35 C170,35 192,42 209,55 C177,49 127,52 92,64 C74,70 62,79 55,95 Z" />
+
+            <Path Fill="#F11320"
+                  Stroke="#020403"
+                  StrokeLineJoin="Round"
+                  StrokeThickness="10"
+                  Data="M23,93 C57,70 98,60 147,59 C186,59 219,67 241,85 C249,106 245,131 231,157 C172,144 99,144 26,161 C17,135 12,112 23,93 Z" />
+            <Path Fill="#FF3C42"
+                  Opacity="0.42"
+                  Data="M38,103 C82,83 155,75 216,87 C160,88 89,97 31,119 C32,113 34,108 38,103 Z" />
+            <Path Fill="#A90010"
+                  Stroke="#020403"
+                  StrokeLineJoin="Round"
+                  StrokeThickness="9"
+                  Data="M213,100 C233,98 247,106 252,124 C243,122 232,125 221,133 C217,122 215,111 213,100 Z" />
+
+            <Canvas Opacity="0.95">
+                <Ellipse Width="14" Height="14" Canvas.Left="47" Canvas.Top="114" Fill="#69001B" />
+                <Ellipse Width="16" Height="16" Canvas.Left="68" Canvas.Top="101" Fill="#69001B" />
+                <Ellipse Width="14" Height="14" Canvas.Left="90" Canvas.Top="120" Fill="#69001B" />
+                <Ellipse Width="12" Height="12" Canvas.Left="113" Canvas.Top="105" Fill="#69001B" />
+                <Ellipse Width="16" Height="16" Canvas.Left="137" Canvas.Top="117" Fill="#69001B" />
+                <Ellipse Width="14" Height="14" Canvas.Left="164" Canvas.Top="97" Fill="#69001B" />
+                <Ellipse Width="16" Height="16" Canvas.Left="184" Canvas.Top="117" Fill="#69001B" />
+                <Ellipse Width="14" Height="14" Canvas.Left="208" Canvas.Top="104" Fill="#69001B" />
+                <Ellipse Width="10" Height="10" Canvas.Left="68" Canvas.Top="139" Fill="#69001B" />
+                <Ellipse Width="12" Height="12" Canvas.Left="103" Canvas.Top="139" Fill="#69001B" />
+                <Ellipse Width="10" Height="10" Canvas.Left="152" Canvas.Top="140" Fill="#69001B" />
+                <Ellipse Width="12" Height="12" Canvas.Left="197" Canvas.Top="139" Fill="#69001B" />
+            </Canvas>
+
+            <Canvas Opacity="0.95">
+                <Ellipse Width="7.6" Height="7.6" Canvas.Left="40.2" Canvas.Top="131.2" Fill="#050505" />
+                <Ellipse Width="7" Height="7" Canvas.Left="82.5" Canvas.Top="132.5" Fill="#050505" />
+                <Ellipse Width="7.6" Height="7.6" Canvas.Left="126.2" Canvas.Top="128.2" Fill="#050505" />
+                <Ellipse Width="7" Height="7" Canvas.Left="177.5" Canvas.Top="131.5" Fill="#050505" />
+                <Ellipse Width="8" Height="8" Canvas.Left="223" Canvas.Top="124" Fill="#050505" />
+            </Canvas>
+
+            <Path Fill="#020403"
+                  Data="M61,144 C76,116 114,120 142,152 C119,180 77,180 58,162 C52,156 55,148 61,144 Z" />
+            <Path Fill="#020403"
+                  Data="M195,144 C180,116 142,120 114,152 C137,180 179,180 198,162 C204,156 201,148 195,144 Z" />
+            <Path Fill="#101010"
+                  Opacity="0.22"
+                  Data="M79,151 C94,141 115,142 130,156 C113,168 90,168 79,151 Z" />
+            <Path Fill="#101010"
+                  Opacity="0.22"
+                  Data="M177,151 C162,141 141,142 126,156 C143,168 166,168 177,151 Z" />
+
+            <Ellipse Width="4.4" Height="4.4" Canvas.Left="122.8" Canvas.Top="187.8" Fill="#020403" />
+            <Ellipse Width="4.4" Height="4.4" Canvas.Left="129.8" Canvas.Top="187.8" Fill="#020403" />
+            <Path Stroke="#020403"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  StrokeThickness="6"
+                  Data="M101,218 C130,205 159,191 183,180" />
+        </Canvas>
+    </Viewbox>
+</UserControl>
