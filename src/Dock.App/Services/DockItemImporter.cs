@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Dock.App.Models;
 
 namespace Dock.App.Services;
@@ -32,7 +31,7 @@ public sealed class DockItemImporter
     {
         var barFolder = UserPaths.EnsureBarFolder(bar.Name);
         var baseName = string.IsNullOrWhiteSpace(uri.Host) ? "Link" : uri.Host;
-        var targetPath = GetAvailablePath(barFolder, $"{UserPaths.ToSafeFileName(baseName)}.url");
+        var targetPath = ManagedPathService.GetAvailablePath(barFolder, $"{UserPaths.ToSafeFileName(baseName)}.url");
         var content = $"[InternetShortcut]{Environment.NewLine}URL={uri}{Environment.NewLine}";
         File.WriteAllText(targetPath, content);
 
@@ -60,7 +59,7 @@ public sealed class DockItemImporter
 
         var gifFolder = Path.Combine(UserPaths.EnsureBarFolder(bar.Name), "gifs");
         Directory.CreateDirectory(gifFolder);
-        var targetPath = GetAvailablePath(gifFolder, Path.GetFileName(sourceFullPath));
+        var targetPath = ManagedPathService.GetAvailablePath(gifFolder, Path.GetFileName(sourceFullPath));
         File.Copy(sourceFullPath, targetPath);
 
         return DockItem.CreateAnimatedGif(targetPath, Path.GetFileNameWithoutExtension(sourceFullPath));
@@ -81,22 +80,7 @@ public sealed class DockItemImporter
             return sourceFullPath;
         }
 
-        var fileName = Path.GetFileName(sourceFullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        var targetPath = GetAvailablePath(barFolder, fileName);
-
-        if (File.Exists(sourceFullPath))
-        {
-            TryMoveFile(sourceFullPath, targetPath);
-            return targetPath;
-        }
-
-        if (Directory.Exists(sourceFullPath))
-        {
-            TryMoveDirectory(sourceFullPath, targetPath);
-            return targetPath;
-        }
-
-        throw new FileNotFoundException("Dropped path no longer exists.", sourceFullPath);
+        return ManagedPathService.MoveFileSystemEntry(sourceFullPath, barFolder);
     }
 
     private static string CreateShortcutInBarFolder(string sourcePath, string barFolder)
@@ -107,109 +91,9 @@ public sealed class DockItemImporter
             throw new FileNotFoundException("Dropped path no longer exists.", sourceFullPath);
         }
 
-        var shortcutPath = GetAvailablePath(barFolder, $"{GetDisplayName(sourceFullPath)}.lnk");
-        CreateShellShortcut(shortcutPath, sourceFullPath);
+        var shortcutPath = ManagedPathService.GetAvailablePath(barFolder, $"{GetDisplayName(sourceFullPath)}.lnk");
+        ShellShortcutService.CreateShortcut(shortcutPath, sourceFullPath);
         return shortcutPath;
-    }
-
-    private static void CreateShellShortcut(string shortcutPath, string targetPath)
-    {
-        Type? shellType = null;
-        object? shell = null;
-        object? shortcut = null;
-
-        try
-        {
-            shellType = Type.GetTypeFromProgID("WScript.Shell", throwOnError: true);
-            shell = Activator.CreateInstance(shellType!);
-            shortcut = shellType!.InvokeMember("CreateShortcut", System.Reflection.BindingFlags.InvokeMethod, null, shell, [shortcutPath]);
-
-            var shortcutType = shortcut!.GetType();
-            shortcutType.InvokeMember("TargetPath", System.Reflection.BindingFlags.SetProperty, null, shortcut, [targetPath]);
-            shortcutType.InvokeMember("WorkingDirectory", System.Reflection.BindingFlags.SetProperty, null, shortcut, [GetWorkingDirectory(targetPath)]);
-            shortcutType.InvokeMember("Save", System.Reflection.BindingFlags.InvokeMethod, null, shortcut, null);
-        }
-        finally
-        {
-            if (shortcut is not null && Marshal.IsComObject(shortcut))
-            {
-                Marshal.FinalReleaseComObject(shortcut);
-            }
-
-            if (shell is not null && Marshal.IsComObject(shell))
-            {
-                Marshal.FinalReleaseComObject(shell);
-            }
-        }
-    }
-
-    private static string GetWorkingDirectory(string targetPath)
-    {
-        if (Directory.Exists(targetPath))
-        {
-            return targetPath;
-        }
-
-        return Path.GetDirectoryName(targetPath) ?? UserPaths.UserProfile;
-    }
-
-    private static void TryMoveFile(string sourcePath, string targetPath)
-    {
-        try
-        {
-            File.Move(sourcePath, targetPath);
-        }
-        catch (IOException)
-        {
-            File.Copy(sourcePath, targetPath);
-            File.Delete(sourcePath);
-        }
-    }
-
-    private static void TryMoveDirectory(string sourcePath, string targetPath)
-    {
-        try
-        {
-            Directory.Move(sourcePath, targetPath);
-        }
-        catch (IOException)
-        {
-            CopyDirectory(sourcePath, targetPath);
-            Directory.Delete(sourcePath, recursive: true);
-        }
-    }
-
-    private static void CopyDirectory(string sourcePath, string targetPath)
-    {
-        Directory.CreateDirectory(targetPath);
-
-        foreach (var directory in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
-        {
-            var relative = Path.GetRelativePath(sourcePath, directory);
-            Directory.CreateDirectory(Path.Combine(targetPath, relative));
-        }
-
-        foreach (var file in Directory.EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories))
-        {
-            var relative = Path.GetRelativePath(sourcePath, file);
-            var targetFile = Path.Combine(targetPath, relative);
-            Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
-            File.Copy(file, targetFile);
-        }
-    }
-
-    private static string GetAvailablePath(string directory, string fileName)
-    {
-        var safeFileName = UserPaths.ToSafeFileName(Path.GetFileNameWithoutExtension(fileName));
-        var extension = Path.GetExtension(fileName);
-        var candidate = Path.Combine(directory, safeFileName + extension);
-
-        for (var index = 2; File.Exists(candidate) || Directory.Exists(candidate); index++)
-        {
-            candidate = Path.Combine(directory, $"{safeFileName} ({index}){extension}");
-        }
-
-        return candidate;
     }
 
     private static string GetDisplayName(string path)

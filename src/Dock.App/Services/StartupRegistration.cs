@@ -1,5 +1,4 @@
 using System.IO;
-using System.Reflection;
 using Microsoft.Win32;
 
 namespace Dock.App.Services;
@@ -25,16 +24,7 @@ public static class StartupRegistration
 
     private static string GetExecutablePath()
     {
-        var assemblyPath = Assembly.GetEntryAssembly()?.Location;
-        if (!string.IsNullOrWhiteSpace(assemblyPath))
-        {
-            var appHostPath = Path.ChangeExtension(assemblyPath, ".exe");
-            if (File.Exists(appHostPath))
-            {
-                return appHostPath;
-            }
-        }
-
-        return System.Environment.ProcessPath ?? "";
+        return System.Environment.ProcessPath ??
+               Path.Combine(System.AppContext.BaseDirectory, $"{UserPaths.AppName}.exe");
     }
 }

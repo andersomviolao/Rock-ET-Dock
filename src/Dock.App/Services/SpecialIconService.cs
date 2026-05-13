@@ -65,6 +65,67 @@ public static class SpecialIconService
         return image;
     }
 
+    public static ImageSource GetSettingsIcon()
+    {
+        var group = new DrawingGroup();
+        var stroke = new Pen(new SolidColorBrush(Color.FromRgb(224, 238, 255)), 3)
+        {
+            StartLineCap = PenLineCap.Round,
+            EndLineCap = PenLineCap.Round
+        };
+
+        group.Children.Add(new GeometryDrawing(
+            new SolidColorBrush(Color.FromRgb(54, 83, 126)),
+            new Pen(new SolidColorBrush(Color.FromRgb(18, 31, 50)), 1.5),
+            new EllipseGeometry(new Point(28, 28), 16, 16)));
+        group.Children.Add(new GeometryDrawing(null, stroke, new LineGeometry(new Point(28, 8), new Point(28, 14))));
+        group.Children.Add(new GeometryDrawing(null, stroke, new LineGeometry(new Point(28, 42), new Point(28, 48))));
+        group.Children.Add(new GeometryDrawing(null, stroke, new LineGeometry(new Point(8, 28), new Point(14, 28))));
+        group.Children.Add(new GeometryDrawing(null, stroke, new LineGeometry(new Point(42, 28), new Point(48, 28))));
+        group.Children.Add(new GeometryDrawing(
+            new SolidColorBrush(Color.FromRgb(118, 192, 255)),
+            null,
+            new EllipseGeometry(new Point(28, 28), 6, 6)));
+
+        var image = new DrawingImage(group);
+        image.Freeze();
+        return image;
+    }
+
+    public static ImageSource GetQuitIcon()
+    {
+        var group = new DrawingGroup();
+        var pen = new Pen(new SolidColorBrush(Color.FromRgb(255, 238, 236)), 3.5)
+        {
+            StartLineCap = PenLineCap.Round,
+            EndLineCap = PenLineCap.Round
+        };
+
+        group.Children.Add(new GeometryDrawing(
+            new SolidColorBrush(Color.FromRgb(156, 48, 56)),
+            new Pen(new SolidColorBrush(Color.FromRgb(70, 20, 26)), 1.5),
+            new RectangleGeometry(new Rect(10, 10, 36, 36), 10, 10)));
+        group.Children.Add(new GeometryDrawing(null, pen, new LineGeometry(new Point(20, 20), new Point(36, 36))));
+        group.Children.Add(new GeometryDrawing(null, pen, new LineGeometry(new Point(36, 20), new Point(20, 36))));
+
+        var image = new DrawingImage(group);
+        image.Freeze();
+        return image;
+    }
+
+    public static ImageSource GetSeparatorIcon()
+    {
+        var group = new DrawingGroup();
+        group.Children.Add(new GeometryDrawing(
+            new SolidColorBrush(Color.FromArgb(180, 230, 238, 248)),
+            null,
+            new RectangleGeometry(new Rect(26, 8, 4, 40), 2, 2)));
+
+        var image = new DrawingImage(group);
+        image.Freeze();
+        return image;
+    }
+
     private static GeometryDrawing CreatePane(double x, double y, double size, Brush brush)
     {
         return new GeometryDrawing(

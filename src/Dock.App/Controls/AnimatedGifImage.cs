@@ -18,15 +18,16 @@ public sealed class AnimatedGifImage : Image
             typeof(AnimatedGifImage),
             new PropertyMetadata(null, OnSourcePathChanged));
 
-    private readonly DispatcherTimer _timer = new();
+    private readonly DispatcherTimer _timer = new(DispatcherPriority.Render);
     private readonly List<GifFrame> _frames = [];
     private int _frameIndex;
 
     public AnimatedGifImage()
     {
         _timer.Tick += (_, _) => ShowNextFrame();
-        Loaded += (_, _) => Start();
+        Loaded += (_, _) => UpdatePlaybackState();
         Unloaded += (_, _) => _timer.Stop();
+        IsVisibleChanged += (_, _) => UpdatePlaybackState();
     }
 
     public string? SourcePath
@@ -72,7 +73,7 @@ public sealed class AnimatedGifImage : Image
             if (_frames.Count > 0)
             {
                 Source = _frames[0].Image;
-                Start();
+                UpdatePlaybackState();
             }
         }
         catch
@@ -82,15 +83,19 @@ public sealed class AnimatedGifImage : Image
         }
     }
 
-    private void Start()
+    private void UpdatePlaybackState()
     {
-        if (!IsLoaded || _frames.Count <= 1)
+        if (!IsLoaded || !IsVisible || _frames.Count <= 1)
         {
+            _timer.Stop();
             return;
         }
 
         _timer.Interval = _frames[_frameIndex].Delay;
-        _timer.Start();
+        if (!_timer.IsEnabled)
+        {
+            _timer.Start();
+        }
     }
 
     private void ShowNextFrame()

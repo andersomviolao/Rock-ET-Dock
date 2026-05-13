@@ -11,6 +11,7 @@ namespace Dock.App.ViewModels;
 public sealed class DockItemViewModel : INotifyPropertyChanged
 {
     private bool _isBeingDragged;
+    private bool _isRunning;
 
     public DockItemViewModel(DockItem item)
     {
@@ -20,6 +21,9 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
             DockItemKind.WindowsButton => SpecialIconService.GetWindowsLogo(),
             DockItemKind.RecycleBin => ShellIconService.GetRecycleBinIcon(),
             DockItemKind.DropPlaceholder => SpecialIconService.GetDropPlaceholderIcon(),
+            DockItemKind.Separator => SpecialIconService.GetSeparatorIcon(),
+            DockItemKind.DockSettings => SpecialIconService.GetSettingsIcon(),
+            DockItemKind.Quit => SpecialIconService.GetQuitIcon(),
             DockItemKind.Window when string.IsNullOrWhiteSpace(item.TargetPath) => SpecialIconService.GetWindowIcon(),
             _ => ShellIconService.GetIcon(item.TargetPath)
         };
@@ -43,11 +47,37 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
 
     public bool IsDropPlaceholder => Item.Kind == DockItemKind.DropPlaceholder;
 
+    public bool IsSeparator => Item.Kind == DockItemKind.Separator;
+
+    public bool IsDockSettings => Item.Kind == DockItemKind.DockSettings;
+
+    public bool IsQuit => Item.Kind == DockItemKind.Quit;
+
     public Visibility StaticIconVisibility => IsAnimatedGif ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility AnimatedGifVisibility => IsAnimatedGif ? Visibility.Visible : Visibility.Collapsed;
 
-    public Visibility ContentVisibility => IsDropPlaceholder ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility ContentVisibility => IsDropPlaceholder || IsSeparator ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility SeparatorVisibility => IsSeparator ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility RunningIndicatorVisibility => IsRunning ? Visibility.Visible : Visibility.Collapsed;
+
+    public bool IsRunning
+    {
+        get => _isRunning;
+        set
+        {
+            if (_isRunning == value)
+            {
+                return;
+            }
+
+            _isRunning = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(RunningIndicatorVisibility));
+        }
+    }
 
     public bool IsBeingDragged
     {

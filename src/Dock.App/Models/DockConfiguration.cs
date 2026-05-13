@@ -167,6 +167,33 @@ public sealed class DockItem
             OriginalSourcePath = targetPath
         };
     }
+
+    public static DockItem CreateSeparator()
+    {
+        return new DockItem
+        {
+            Kind = DockItemKind.Separator,
+            DisplayName = "Separador"
+        };
+    }
+
+    public static DockItem CreateDockSettings()
+    {
+        return new DockItem
+        {
+            Kind = DockItemKind.DockSettings,
+            DisplayName = "Configuracoes"
+        };
+    }
+
+    public static DockItem CreateQuit()
+    {
+        return new DockItem
+        {
+            Kind = DockItemKind.Quit,
+            DisplayName = "Sair"
+        };
+    }
 }
 
 public enum DockEdge
@@ -188,6 +215,8 @@ public enum DockItemKind
     AnimatedGif,
     DropPlaceholder,
     Separator,
+    DockSettings,
+    Quit,
     Special
 }
 

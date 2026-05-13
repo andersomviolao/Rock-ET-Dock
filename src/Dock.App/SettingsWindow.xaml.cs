@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using Dock.App.Models;
 using Dock.App.Services;
 using Dock.App.ViewModels;
@@ -17,7 +16,6 @@ public partial class SettingsWindow : Window
     private readonly DockConfigurationStore _store;
     private readonly DockBarSettings _bar;
     private readonly DockItemImporter _importer = new();
-    private readonly DispatcherTimer _applyTimer = new();
     private bool _isLoadingValues;
     private bool _isSavingValues;
 
@@ -27,19 +25,13 @@ public partial class SettingsWindow : Window
     {
         _store = store;
         _bar = bar;
-        _applyTimer.Interval = TimeSpan.FromMilliseconds(250);
-        _applyTimer.Tick += (_, _) =>
-        {
-            _applyTimer.Stop();
-            ApplyValuesImmediately();
-        };
 
         DataContext = new SettingsWindowText(bar);
         InitializeComponent();
         _isLoadingValues = true;
         LoadValues();
         _isLoadingValues = false;
-        AttachImmediateApplyHandlers();
+        AttachImmediateSaveHandlers();
     }
 
     private void LoadValues()
@@ -112,28 +104,9 @@ public partial class SettingsWindow : Window
         PopupDelaySlider.Value = app.PopupDelayMs;
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
-    {
-        _applyTimer.Stop();
-        if (SaveValues())
-        {
-            SettingsApplied?.Invoke(this, EventArgs.Empty);
-            Close();
-        }
-    }
-
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         Close();
-    }
-
-    private void Apply_Click(object sender, RoutedEventArgs e)
-    {
-        _applyTimer.Stop();
-        if (SaveValues())
-        {
-            SettingsApplied?.Invoke(this, EventArgs.Empty);
-        }
     }
 
     private void AddGif_Click(object sender, RoutedEventArgs e)
@@ -166,7 +139,7 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void AttachImmediateApplyHandlers()
+    private void AttachImmediateSaveHandlers()
     {
         foreach (var checkBox in new[]
                  {
@@ -176,8 +149,8 @@ public partial class SettingsWindow : Window
                      OpenRunningInstancesBox, PopupOnMouseoverBox
                  })
         {
-            checkBox.Checked += (_, _) => QueueImmediateApply();
-            checkBox.Unchecked += (_, _) => QueueImmediateApply();
+            checkBox.Checked += (_, _) => SaveImmediately();
+            checkBox.Unchecked += (_, _) => SaveImmediately();
         }
 
         foreach (var slider in new[]
@@ -189,7 +162,7 @@ public partial class SettingsWindow : Window
                      FontSizeSlider, PopupDelaySlider
                  })
         {
-            slider.ValueChanged += (_, _) => QueueImmediateApply();
+            slider.ValueChanged += (_, _) => SaveImmediately();
         }
 
         foreach (var comboBox in new[]
@@ -198,7 +171,7 @@ public partial class SettingsWindow : Window
                      EdgeBox, LayeringBox
                  })
         {
-            comboBox.SelectionChanged += (_, _) => QueueImmediateApply();
+            comboBox.SelectionChanged += (_, _) => SaveImmediately();
         }
 
         ThemeBox.SelectionChanged += (_, _) =>
@@ -209,30 +182,33 @@ public partial class SettingsWindow : Window
             }
 
             var shape = DockBarViewModel.GetThemeShape(theme);
-            ShellCornerRadiusSlider.Value = shape.ShellCornerRadius;
-            TileCornerRadiusSlider.Value = shape.TileCornerRadius;
-            QueueImmediateApply();
+            _isLoadingValues = true;
+            try
+            {
+                ShellCornerRadiusSlider.Value = shape.ShellCornerRadius;
+                TileCornerRadiusSlider.Value = shape.TileCornerRadius;
+            }
+            finally
+            {
+                _isLoadingValues = false;
+            }
+
+            SaveImmediately();
         };
 
         foreach (var textBox in new[] { BarNameBox, FontFamilyBox, LabelColorBox })
         {
-            textBox.TextChanged += (_, _) => QueueImmediateApply();
+            textBox.TextChanged += (_, _) => SaveImmediately();
         }
     }
 
-    private void QueueImmediateApply()
+    private void SaveImmediately()
     {
         if (_isLoadingValues || _isSavingValues)
         {
             return;
         }
 
-        _applyTimer.Stop();
-        _applyTimer.Start();
-    }
-
-    private void ApplyValuesImmediately()
-    {
         if (SaveValues(showErrors: false))
         {
             SettingsApplied?.Invoke(this, EventArgs.Empty);
@@ -309,6 +285,7 @@ public partial class SettingsWindow : Window
             }
 
             _store.Save();
+            DataContext = new SettingsWindowText(_bar);
             return true;
         }
         catch (Exception ex)

@@ -34,12 +34,15 @@ foreach (var edge in Enum.GetValues<DockEdge>())
 ValidateReorder();
 ValidateRemoveItem();
 ValidateSpecialItems();
+ValidateSpecialCommandItems();
+ValidateRunningApplicationMapping();
 ValidateDropPlaceholder();
 ValidateImportModes();
 ValidateAnimatedGifImport();
 ValidateExportToDesktop();
 ValidateCompactIconSizing();
 ValidateNeighborZoomScale();
+ValidateHoverZoomOffsets();
 ValidateCustomBarGeometry();
 ValidatePlaceholderIsGapOnly();
 
@@ -47,8 +50,10 @@ Console.WriteLine("Dock geometry checks passed for Top, Bottom, Left and Right."
 Console.WriteLine("Dock reorder checks passed.");
 Console.WriteLine("Dock desktop export checks passed.");
 Console.WriteLine("Dock import, placeholder and GIF checks passed.");
+Console.WriteLine("Dock special command and running-app checks passed.");
 Console.WriteLine("Dock compact icon sizing checks passed.");
 Console.WriteLine("Dock neighbor zoom checks passed.");
+Console.WriteLine("Dock hover zoom offset checks passed.");
 Console.WriteLine("Dock custom bar sizing checks passed.");
 Console.WriteLine("Dock placeholder gap checks passed.");
 
@@ -159,6 +164,40 @@ void ValidateSpecialItems()
     AssertTrue(viewModel.RemoveItem(recycleBin.Id), "remove recycle bin");
     AssertOrder(viewModel, "windows-button", "a");
     AssertPersistedOrder(bar, "windows-button", "a");
+}
+
+void ValidateSpecialCommandItems()
+{
+    var separator = DockItem.CreateSeparator();
+    var settings = DockItem.CreateDockSettings();
+    var quit = DockItem.CreateQuit();
+
+    AssertTrue(separator.Kind == DockItemKind.Separator, "separator kind");
+    AssertTrue(settings.Kind == DockItemKind.DockSettings, "settings kind");
+    AssertTrue(quit.Kind == DockItemKind.Quit, "quit kind");
+
+    var separatorViewModel = new DockItemViewModel(separator);
+    AssertTrue(separatorViewModel.ContentVisibility == System.Windows.Visibility.Collapsed, "separator hides icon content");
+    AssertTrue(separatorViewModel.SeparatorVisibility == System.Windows.Visibility.Visible, "separator shows separator content");
+}
+
+void ValidateRunningApplicationMapping()
+{
+    var processPath = Environment.ProcessPath;
+    if (string.IsNullOrWhiteSpace(processPath) || !File.Exists(processPath))
+    {
+        return;
+    }
+
+    var item = new DockItem
+    {
+        Kind = DockItemKind.File,
+        DisplayName = "Current",
+        TargetPath = processPath
+    };
+
+    AssertTrue(RunningApplicationService.TryGetExecutablePath(item, out var executablePath), "current process path should be executable");
+    AssertTrue(string.Equals(Path.GetFullPath(processPath), executablePath, StringComparison.OrdinalIgnoreCase), "executable path should normalize");
 }
 
 void ValidateDropPlaceholder()
@@ -357,6 +396,26 @@ void ValidateNeighborZoomScale()
     AssertTrue(near > far, "near neighbor should scale more than far neighbor");
     AssertTrue(far > 1.0, "last icon inside zoom range should still scale");
     AssertTrue(viewModel.GetZoomScaleForDistance(5) == 1.0, "icon outside zoom range should stay at normal scale");
+}
+
+void ValidateHoverZoomOffsets()
+{
+    var offsets = DockZoomLayout.CalculateOffsets(
+        [0, 50, 100],
+        [1.0, 1.6, 1.0],
+        itemSize: 50);
+
+    AssertNear(-15, offsets[0], "left icon should move left for focused middle icon");
+    AssertNear(0, offsets[1], "focused icon should stay centered");
+    AssertNear(15, offsets[2], "right icon should move right for focused middle icon");
+
+    var combinedOffsets = DockZoomLayout.CalculateOffsets(
+        [0, 50, 100],
+        [1.3, 1.6, 1.3],
+        itemSize: 50);
+
+    AssertTrue(combinedOffsets[0] < 0, "left influenced icon should still move outward");
+    AssertTrue(combinedOffsets[2] > 0, "right influenced icon should still move outward");
 }
 
 void ValidateCustomBarGeometry()

@@ -108,44 +108,63 @@
                                     <TranslateTransform X="0" Y="0" />
                                 </TransformGroup>
                             </Button.RenderTransform>
-                            <Grid ClipToBounds="False"
-                                  Margin="{Binding DataContext.ItemContentMargin, RelativeSource={RelativeSource AncestorType=Window}}"
-                                  Visibility="{Binding ContentVisibility}"
-                                  Opacity="{Binding DragOpacity}">
-                                <Border Width="{Binding DataContext.IconTileSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Height="{Binding DataContext.IconTileSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Background="{Binding DataContext.TileBackground, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        BorderBrush="{Binding DataContext.TileBorderBrush, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        BorderThickness="1"
-                                        CornerRadius="{Binding DataContext.TileCornerRadius, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Image Width="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                       Height="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Opacity="{Binding DataContext.ItemOpacity, RelativeSource={RelativeSource AncestorType=Window}}"
-                                       RenderOptions.BitmapScalingMode="HighQuality"
-                                       Source="{Binding Icon}"
-                                       Visibility="{Binding StaticIconVisibility}" />
-                                <controls:AnimatedGifImage Width="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                           Height="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Opacity="{Binding DataContext.ItemOpacity, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                           RenderOptions.BitmapScalingMode="HighQuality"
-                                                           SourcePath="{Binding Item.TargetPath}"
-                                                           Stretch="Uniform"
-                                                           Visibility="{Binding AnimatedGifVisibility}" />
-                                <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Bottom"
-                                           Margin="4,0,4,3"
-                                           FontFamily="{Binding DataContext.Bar.FontFamily, RelativeSource={RelativeSource AncestorType=Window}}"
-                                           FontSize="{Binding DataContext.LabelFontSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                           Foreground="{Binding DataContext.LabelBrush, RelativeSource={RelativeSource AncestorType=Window}}"
-                                           MaxWidth="{Binding DataContext.LabelMaxWidth, RelativeSource={RelativeSource AncestorType=Window}}"
-                                           Text="{Binding ShortLabel}"
-                                           TextAlignment="Center"
-                                           TextTrimming="CharacterEllipsis"
-                                           Visibility="{Binding DataContext.LabelVisibility, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Grid ClipToBounds="False">
+                                <Grid ClipToBounds="False"
+                                      Margin="{Binding DataContext.ItemContentMargin, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      Visibility="{Binding ContentVisibility}"
+                                      Opacity="{Binding DragOpacity}">
+                                    <Border Width="{Binding DataContext.IconTileSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Height="{Binding DataContext.IconTileSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Background="{Binding DataContext.TileBackground, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            BorderBrush="{Binding DataContext.TileBorderBrush, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            BorderThickness="1"
+                                            CornerRadius="{Binding DataContext.TileCornerRadius, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    <Image Width="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                           Height="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Opacity="{Binding DataContext.ItemOpacity, RelativeSource={RelativeSource AncestorType=Window}}"
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           Source="{Binding Icon}"
+                                           Visibility="{Binding StaticIconVisibility}" />
+                                    <controls:AnimatedGifImage Width="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                               Height="{Binding DataContext.IconImageSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Opacity="{Binding DataContext.ItemOpacity, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"
+                                                               SourcePath="{Binding Item.TargetPath}"
+                                                               Stretch="Uniform"
+                                                               Visibility="{Binding AnimatedGifVisibility}" />
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Bottom"
+                                               Margin="4,0,4,3"
+                                               FontFamily="{Binding DataContext.Bar.FontFamily, RelativeSource={RelativeSource AncestorType=Window}}"
+                                               FontSize="{Binding DataContext.LabelFontSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                               Foreground="{Binding DataContext.LabelBrush, RelativeSource={RelativeSource AncestorType=Window}}"
+                                               MaxWidth="{Binding DataContext.LabelMaxWidth, RelativeSource={RelativeSource AncestorType=Window}}"
+                                               Text="{Binding ShortLabel}"
+                                               TextAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding DataContext.LabelVisibility, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    <Ellipse Width="8"
+                                             Height="8"
+                                             Margin="0,0,8,8"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Bottom"
+                                             Fill="#54F18C"
+                                             Stroke="#D8FFE6"
+                                             StrokeThickness="1"
+                                             Visibility="{Binding RunningIndicatorVisibility}" />
+                                </Grid>
+                                <Border Width="{Binding DataContext.SeparatorWidth, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        Height="{Binding DataContext.SeparatorHeight, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="{Binding DataContext.SeparatorBrush, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CornerRadius="2"
+                                        Opacity="{Binding DragOpacity}"
+                                        Visibility="{Binding SeparatorVisibility}" />
                             </Grid>
                         </Button>
                     </DataTemplate>

@@ -114,6 +114,25 @@ public partial class App : System.Windows.Application
         }
     }
 
+    internal void EnsureGlobalHotKeyRegistration()
+    {
+        foreach (var window in _windows.ToArray())
+        {
+            if (window.TryRegisterGlobalHotKey())
+            {
+                return;
+            }
+        }
+    }
+
+    internal void ToggleDockVisibilityByHotKey()
+    {
+        foreach (var window in _windows.ToArray())
+        {
+            window.ToggleVisibilityByHotKey();
+        }
+    }
+
     internal void RemoveRuntimeWindow(long nativeWindowHandle)
     {
         Dispatcher.BeginInvoke(() =>

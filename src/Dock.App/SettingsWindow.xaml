@@ -293,14 +293,12 @@
                                   Content="Desativar animacoes de minimizar (em breve)" />
                         <CheckBox x:Name="ShowRunningIndicatorsBox"
                                   Margin="0,0,0,8"
-                                  IsEnabled="False"
-                                  ToolTip="Depende do monitoramento de processos/janelas."
-                                  Content="Mostrar indicadores de apps abertos (em breve)" />
+                                  ToolTip="Mostra um marcador em itens .exe ou atalhos .lnk quando o processo correspondente estiver aberto."
+                                  Content="Mostrar indicadores de apps abertos" />
                         <CheckBox x:Name="OpenRunningInstancesBox"
                                   Margin="0,0,0,8"
-                                  IsEnabled="False"
-                                  ToolTip="Depende do mapeamento entre itens e janelas abertas."
-                                  Content="Abrir instancia existente quando possivel (em breve)" />
+                                  ToolTip="Tenta trazer a janela existente para frente antes de abrir uma nova instancia."
+                                  Content="Abrir instancia existente quando possivel" />
                         <CheckBox x:Name="PopupOnMouseoverBox"
                                   Margin="0,0,0,12"
                                   Content="Mostrar barra ao passar o mouse" />
@@ -331,13 +329,8 @@
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal">
                 <Button Width="92"
-                        Margin="0,0,8,0"
                         Click="Close_Click"
                         Content="Fechar" />
-                <Button Width="128"
-                        IsDefault="True"
-                        Click="Save_Click"
-                        Content="Salvar e fechar" />
             </StackPanel>
         </Grid>
     </Grid>

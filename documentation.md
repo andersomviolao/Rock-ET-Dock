@@ -24,6 +24,7 @@ Pastas locais de referencia como `_reference` e `_tools`, alem do instalador ori
 dotnet build Dock.slnx
 dotnet run --project src\Dock.App\Dock.App.csproj
 dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
+dotnet publish src\Dock.App\Dock.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
 Tambem existe `run.bat` para iniciar o app a partir da raiz do projeto.
@@ -54,17 +55,22 @@ dotnet run --project src\Dock.App\Dock.App.csproj
 - Temas inspirados nos nomes de skins de referencia, com estilos proprios.
 - Sliders de arredondamento separados para a barra e fundo dos icones.
 - Drag-and-drop para adicionar, reordenar e remover itens.
+- Menu de contexto para adicionar arquivos, pastas, separadores, configuracoes e sair.
 - Botao Windows com menu Iniciar no clique esquerdo e menu Win+X no clique direito.
 - Lixeira com menu nativo e drop de arquivos.
 - Opcao para esconder a barra nativa do Windows enquanto o app estiver aberto.
 - Itens temporarios de janelas minimizadas.
+- Hotkey global `Ctrl+Alt+R` para ocultar/exibir todas as barras abertas.
+- Indicador de app aberto e abertura de instancia existente para itens `.exe` e atalhos `.lnk` resolviveis.
 
 ## Decisoes de implementacao
 
 - O projeto e clean-room: comportamento e formatos foram documentados, mas codigo e assets de runtime sao proprios.
 - Arquivos soltos na barra sao movidos ou referenciados por atalhos dentro da pasta gerenciada da barra, conforme a configuracao.
-- A janela de configuracoes aplica mudancas imediatamente para permitir visualizar a barra enquanto se ajusta.
+- A regra de mover/copiar entradas do sistema de arquivos fica centralizada em `ManagedPathService`; criacao e resolucao de atalhos ficam em `ShellShortcutService`.
+- A janela de configuracoes salva e reflete mudancas imediatamente para permitir visualizar a barra enquanto se ajusta.
 - O zoom usa interpolacao por frame para reduzir saltos visuais durante hover.
+- Indicadores de execucao usam mapeamento best-effort por caminho de executavel. Documentos, URLs, apps modernos/UWP e comandos indiretos podem nao ser associados a uma janela existente.
 
 ## Validacao
 

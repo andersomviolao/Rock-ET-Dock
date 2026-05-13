@@ -33,7 +33,7 @@ public sealed class DockConfigurationStore
 
         if (Current.Bars.Count == 0)
         {
-            Current.Bars.Add(DockBarSettings.Create("Dock", DockEdge.Bottom));
+            Current.Bars.Add(CreateDefaultBar("Dock"));
             Save();
         }
 
@@ -58,8 +58,18 @@ public sealed class DockConfigurationStore
         {
             Bars =
             [
-                DockBarSettings.Create("Principal", DockEdge.Bottom)
+                CreateDefaultBar("Principal")
             ]
         };
+    }
+
+    private static DockBarSettings CreateDefaultBar(string name)
+    {
+        var bar = DockBarSettings.Create(name, DockEdge.Bottom);
+        bar.Items.Add(DockItem.CreateWindowsButton());
+        bar.Items.Add(DockItem.CreateRecycleBin());
+        bar.Items.Add(DockItem.CreateDockSettings());
+        bar.Items.Add(DockItem.CreateQuit());
+        return bar;
     }
 }

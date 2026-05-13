@@ -119,6 +119,16 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
 
     public Brush TileBorderBrush => CreateBrush(GetThemePalette(Bar.Theme).TileBorder);
 
+    public Brush SeparatorBrush => CreateBrush(GetThemePalette(Bar.Theme).ShellBorder);
+
+    public double SeparatorWidth => Orientation == System.Windows.Controls.Orientation.Vertical
+        ? Math.Max(16, IconTileSize * 0.72)
+        : 3;
+
+    public double SeparatorHeight => Orientation == System.Windows.Controls.Orientation.Vertical
+        ? 3
+        : Math.Max(16, IconTileSize * 0.72);
+
     public double ShadowOpacity => GetThemePalette(Bar.Theme).ShadowOpacity;
 
     public Brush LabelBrush
@@ -366,6 +376,9 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ShellBorderBrush));
         OnPropertyChanged(nameof(TileBackground));
         OnPropertyChanged(nameof(TileBorderBrush));
+        OnPropertyChanged(nameof(SeparatorBrush));
+        OnPropertyChanged(nameof(SeparatorWidth));
+        OnPropertyChanged(nameof(SeparatorHeight));
         OnPropertyChanged(nameof(ShadowOpacity));
         OnPropertyChanged(nameof(LabelBrush));
     }

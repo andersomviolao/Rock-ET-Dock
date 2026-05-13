@@ -14,6 +14,7 @@ using System.Windows.Threading;
 using Dock.App.Models;
 using Dock.App.Services;
 using Dock.App.ViewModels;
+using Microsoft.Win32;
 using Forms = System.Windows.Forms;
 
 namespace Dock.App;
@@ -36,6 +37,8 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _autoHideTimer = new();
     private readonly DispatcherTimer _popupTimer = new();
     private readonly DispatcherTimer _reorderDragTimer = new();
+    private readonly DispatcherTimer _runningStateTimer = new();
+    private static MainWindow? s_hotKeyOwner;
     private double _visibleLeft;
     private double _visibleTop;
     private bool _isDockHidden;
@@ -60,6 +63,7 @@ public partial class MainWindow : Window
     private bool _isHoverZoomSettling;
     private Point _hoverZoomPointer;
     private TimeSpan _lastHoverRenderingTime;
+    private GlobalHotKey? _globalHotKey;
 
     public MainWindow(DockConfigurationStore store, DockBarSettings bar)
     {
@@ -88,7 +92,10 @@ public partial class MainWindow : Window
         };
         _reorderDragTimer.Interval = TimeSpan.FromMilliseconds(16);
         _reorderDragTimer.Tick += (_, _) => PollReorderDrag();
+        _runningStateTimer.Interval = TimeSpan.FromMilliseconds(1500);
+        _runningStateTimer.Tick += (_, _) => RefreshRunningIndicators();
 
+        SourceInitialized += (_, _) => CurrentApp.EnsureGlobalHotKeyRegistration();
         Loaded += (_, _) =>
         {
             ApplyBarSettings();
@@ -107,7 +114,12 @@ public partial class MainWindow : Window
         DockShell.DragLeave += DockShell_DragLeave;
         DockShell.Drop += DockShell_Drop;
         CompositionTarget.Rendering += CompositionTarget_Rendering;
-        Closed += (_, _) => CompositionTarget.Rendering -= CompositionTarget_Rendering;
+        Closed += (_, _) =>
+        {
+            CompositionTarget.Rendering -= CompositionTarget_Rendering;
+            _runningStateTimer.Stop();
+            ReleaseGlobalHotKey();
+        };
     }
 
     private void DockItem_Click(object sender, RoutedEventArgs e)
@@ -130,6 +142,33 @@ public partial class MainWindow : Window
                 }
 
                 if (itemViewModel.IsAnimatedGif || itemViewModel.IsDropPlaceholder)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                if (itemViewModel.IsSeparator)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                if (itemViewModel.IsDockSettings)
+                {
+                    OpenSettings();
+                    e.Handled = true;
+                    return;
+                }
+
+                if (itemViewModel.IsQuit)
+                {
+                    CurrentApp.ExitAll();
+                    e.Handled = true;
+                    return;
+                }
+
+                if (_store.Current.App.OpenRunningInstances &&
+                    RunningApplicationService.TryActivateExisting(itemViewModel.Item))
                 {
                     e.Handled = true;
                     return;
@@ -591,7 +630,10 @@ public partial class MainWindow : Window
 
         try
         {
-            if (!itemViewModel.IsRecycleBin)
+            if (!itemViewModel.IsRecycleBin &&
+                !itemViewModel.IsSeparator &&
+                !itemViewModel.IsDockSettings &&
+                !itemViewModel.IsQuit)
             {
                 _exporter.MoveToDesktop(itemViewModel.Item);
             }
@@ -1438,6 +1480,16 @@ public partial class MainWindow : Window
         menu.Items.Add(CreateMenuItem("Configuracoes da barra", (_, _) => OpenSettings()));
         menu.Items.Add(new System.Windows.Controls.Separator());
 
+        var addMenu = new System.Windows.Controls.MenuItem { Header = "Adicionar item" };
+        addMenu.Items.Add(CreateMenuItem("Arquivo...", (_, _) => AddFilesFromDialog()));
+        addMenu.Items.Add(CreateMenuItem("Pasta...", (_, _) => AddFolderFromDialog()));
+        addMenu.Items.Add(CreateMenuItem("Separador", (_, _) => AddPersistentItem(DockItem.CreateSeparator())));
+        addMenu.Items.Add(CreateMenuItem("Configuracoes", (_, _) => AddPersistentItem(DockItem.CreateDockSettings())));
+        addMenu.Items.Add(CreateMenuItem("Sair", (_, _) => AddPersistentItem(DockItem.CreateQuit())));
+        menu.Items.Add(addMenu);
+
+        menu.Items.Add(new System.Windows.Controls.Separator());
+
         menu.Items.Add(CreateMenuItem("Abrir pasta da barra", (_, _) =>
         {
             DockLauncher.Open(new DockItem { TargetPath = UserPaths.EnsureBarFolder(_bar.Name) });
@@ -1465,8 +1517,67 @@ public partial class MainWindow : Window
 
         menu.Items.Add(CreateMenuItem("Remover esta barra", (_, _) => CurrentApp.RemoveBar(this, _bar)));
         menu.Items.Add(CreateMenuItem("Sair", (_, _) => CurrentApp.ExitAll()));
+        menu.Opened += (_, _) => addMenu.IsEnabled = !_bar.LockItems;
 
         return menu;
+    }
+
+    private void AddFilesFromDialog()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Adicionar arquivos",
+            Filter = "Todos os arquivos (*.*)|*.*",
+            Multiselect = true
+        };
+
+        if (dialog.ShowDialog(this) == true)
+        {
+            AddImportedPaths(dialog.FileNames);
+        }
+    }
+
+    private void AddFolderFromDialog()
+    {
+        using var dialog = new Forms.FolderBrowserDialog
+        {
+            Description = "Selecione a pasta para adicionar ao dock",
+            UseDescriptionForTitle = true
+        };
+
+        if (dialog.ShowDialog() == Forms.DialogResult.OK)
+        {
+            AddImportedPaths([dialog.SelectedPath]);
+        }
+    }
+
+    private void AddImportedPaths(IEnumerable<string> paths)
+    {
+        try
+        {
+            foreach (var path in paths)
+            {
+                AddPersistentItem(_importer.ImportFileSystemPath(_bar, path));
+            }
+        }
+        catch (Exception ex)
+        {
+            RuntimeLog.Write(ex, "AddImportedPaths");
+            System.Windows.MessageBox.Show(this, ex.Message, UserPaths.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void AddPersistentItem(DockItem item)
+    {
+        if (_bar.LockItems)
+        {
+            return;
+        }
+
+        _viewModel.AddItem(item);
+        _store.Save();
+        RefreshRunningIndicators();
+        PositionDock();
     }
 
     private void ChangeEdge(DockEdge edge)
@@ -1582,6 +1693,62 @@ public partial class MainWindow : Window
         PositionDock();
     }
 
+    internal bool TryRegisterGlobalHotKey()
+    {
+        if (s_hotKeyOwner is not null || _globalHotKey is not null)
+        {
+            return false;
+        }
+
+        var handle = new WindowInteropHelper(this).Handle;
+        _globalHotKey = GlobalHotKey.Register(
+            handle,
+            ModifierKeys.Control | ModifierKeys.Alt,
+            Key.R,
+            () => CurrentApp.ToggleDockVisibilityByHotKey());
+
+        if (_globalHotKey is null)
+        {
+            return false;
+        }
+
+        s_hotKeyOwner = this;
+        return true;
+    }
+
+    internal void ToggleVisibilityByHotKey()
+    {
+        if (_isDockHidden)
+        {
+            _isDockHidden = false;
+            MoveToVisiblePosition(animated: true);
+        }
+        else
+        {
+            _isDockHidden = true;
+            MoveToHiddenPosition(animated: true);
+        }
+    }
+
+    private void ReleaseGlobalHotKey()
+    {
+        if (_globalHotKey is null)
+        {
+            return;
+        }
+
+        _globalHotKey.Dispose();
+        _globalHotKey = null;
+        if (ReferenceEquals(s_hotKeyOwner, this))
+        {
+            s_hotKeyOwner = null;
+            if (!Dispatcher.HasShutdownStarted)
+            {
+                Dispatcher.BeginInvoke(() => CurrentApp.EnsureGlobalHotKeyRegistration(), DispatcherPriority.ApplicationIdle);
+            }
+        }
+    }
+
     private void ApplyBarSettings()
     {
         ResetHoverZoom(immediate: true);
@@ -1600,6 +1767,7 @@ public partial class MainWindow : Window
         DataContext = null;
         DataContext = _viewModel;
         DockItemsControl.Items.Refresh();
+        ConfigureRunningIndicatorTimer();
         if (!_bar.AutoHide)
         {
             ShowDock();
@@ -1615,6 +1783,43 @@ public partial class MainWindow : Window
         {
             _autoHideTimer.Stop();
             _popupTimer.Stop();
+        }
+    }
+
+    private void ConfigureRunningIndicatorTimer()
+    {
+        if (_store.Current.App.ShowRunningIndicators)
+        {
+            RefreshRunningIndicators();
+            _runningStateTimer.Start();
+            return;
+        }
+
+        _runningStateTimer.Stop();
+        foreach (var item in _viewModel.Items)
+        {
+            item.IsRunning = false;
+        }
+    }
+
+    private void RefreshRunningIndicators()
+    {
+        if (!_store.Current.App.ShowRunningIndicators)
+        {
+            return;
+        }
+
+        ISet<string>? runningExecutablePaths = null;
+        foreach (var item in _viewModel.Items)
+        {
+            if (!RunningApplicationService.TryGetExecutablePath(item.Item, out _))
+            {
+                item.IsRunning = false;
+                continue;
+            }
+
+            runningExecutablePaths ??= RunningApplicationService.GetRunningExecutablePaths();
+            item.IsRunning = RunningApplicationService.IsItemRunning(item.Item, runningExecutablePaths);
         }
     }
 
@@ -1825,6 +2030,7 @@ public partial class MainWindow : Window
             .ToList();
         var pointerAxis = IsVerticalDock ? pointer.Y : pointer.X;
         var slotStep = Math.Max(1, _viewModel.ItemButtonSize + Math.Max(0, _bar.IconSpacing));
+        var entries = new List<(Button Button, DockItemViewModel Item, double CenterAxis, double TargetScale)>();
         var allSettled = true;
 
         foreach (var button in buttons)
@@ -1848,14 +2054,25 @@ public partial class MainWindow : Window
                 ? Math.Abs(pointerAxis - centerAxis) / slotStep
                 : double.PositiveInfinity;
             var targetScale = _isHoverZoomActive
-                ? _viewModel.GetZoomScaleForDistance(distance)
+                ? item.IsSeparator ? 1.0 : _viewModel.GetZoomScaleForDistance(distance)
                 : 1.0;
 
-            allSettled &= SetScaleTowards(button, targetScale, smoothing);
+            entries.Add((button, item, centerAxis, targetScale));
+        }
 
-            if (_bar.ZoomOpaque && FindVisualChild<Image>(button) is { } image)
+        var offsets = DockZoomLayout.CalculateOffsets(
+            entries.Select(static entry => entry.CenterAxis).ToArray(),
+            entries.Select(static entry => entry.TargetScale).ToArray(),
+            _viewModel.ItemButtonSize);
+
+        for (var index = 0; index < entries.Count; index++)
+        {
+            var entry = entries[index];
+            allSettled &= SetScaleAndOffsetTowards(entry.Button, entry.TargetScale, offsets[index], IsVerticalDock, smoothing);
+
+            if (_bar.ZoomOpaque && FindVisualChild<Image>(entry.Button) is { } image)
             {
-                var targetOpacity = _isHoverZoomActive && targetScale > 1.001
+                var targetOpacity = _isHoverZoomActive && entry.TargetScale > 1.001
                     ? 1.0
                     : _viewModel.ItemOpacity;
                 allSettled &= SetOpacityTowards(image, targetOpacity, smoothing);
@@ -1878,9 +2095,11 @@ public partial class MainWindow : Window
         ClearHoverAnimationClocks();
         foreach (var button in FindDockItemButtons(DockItemsControl))
         {
-            var (scale, _) = EnsureItemTransforms(button);
+            var (scale, translate) = EnsureItemTransforms(button);
             scale.ScaleX = 1.0;
             scale.ScaleY = 1.0;
+            translate.X = 0;
+            translate.Y = 0;
             if (FindVisualChild<Image>(button) is { } image)
             {
                 image.Opacity = _viewModel.ItemOpacity;
@@ -1895,9 +2114,11 @@ public partial class MainWindow : Window
     {
         foreach (var button in FindDockItemButtons(DockItemsControl))
         {
-            var (scale, _) = EnsureItemTransforms(button);
+            var (scale, translate) = EnsureItemTransforms(button);
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            translate.BeginAnimation(TranslateTransform.XProperty, null);
+            translate.BeginAnimation(TranslateTransform.YProperty, null);
             if (FindVisualChild<Image>(button) is { } image)
             {
                 image.BeginAnimation(OpacityProperty, null);
@@ -1905,18 +2126,34 @@ public partial class MainWindow : Window
         }
     }
 
-    private static bool SetScaleTowards(Button button, double targetScale, double smoothing)
+    private static bool SetScaleAndOffsetTowards(Button button, double targetScale, double targetAxisOffset, bool vertical, double smoothing)
     {
-        var (scale, _) = EnsureItemTransforms(button);
+        var (scale, translate) = EnsureItemTransforms(button);
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        translate.BeginAnimation(TranslateTransform.XProperty, null);
+        translate.BeginAnimation(TranslateTransform.YProperty, null);
 
         var nextX = SmoothValue(scale.ScaleX, targetScale, smoothing);
         var nextY = SmoothValue(scale.ScaleY, targetScale, smoothing);
         scale.ScaleX = nextX;
         scale.ScaleY = nextY;
+
+        var nextOffset = SmoothValue(vertical ? translate.Y : translate.X, targetAxisOffset, smoothing);
+        if (vertical)
+        {
+            translate.X = 0;
+            translate.Y = nextOffset;
+        }
+        else
+        {
+            translate.X = nextOffset;
+            translate.Y = 0;
+        }
+
         return Math.Abs(nextX - targetScale) < 0.003 &&
-               Math.Abs(nextY - targetScale) < 0.003;
+               Math.Abs(nextY - targetScale) < 0.003 &&
+               Math.Abs(nextOffset - targetAxisOffset) < 0.25;
     }
 
     private static bool SetOpacityTowards(UIElement element, double targetOpacity, double smoothing)

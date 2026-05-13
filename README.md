@@ -9,6 +9,7 @@ Workspace para recriar um dock/app launcher moderno inspirado no RocketDock.
 - Target: `.NET 10`, `net10.0-windows`
 - Build: `dotnet build Dock.slnx`
 - Run: `dotnet run --project src/Dock.App/Dock.App.csproj`
+- Pacote release: `dotnet publish src/Dock.App/Dock.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true`
 - Validar geometria das quatro bordas: `dotnet run --project tests/Dock.GeometryChecks/Dock.GeometryChecks.csproj`
 
 ## Contrato de dados
@@ -37,9 +38,9 @@ As categorias iniciais seguem a organizacao da RocketDock:
 - Estilo: temas da referencia RocketDock, opacidade do fundo, arredondamento da barra, arredondamento do fundo dos icones, fonte e cor da legenda.
 - Comportamento: minimizar janelas, indicadores, instancia existente e popup.
 
-O botao `Aplicar` salva e atualiza a barra sem fechar a janela. O botao Windows abre o menu Iniciar no clique esquerdo e o menu nativo Win+X no clique direito. O backend de minimizar janelas para a barra usa eventos Win32 e adiciona itens temporarios de janela na primeira barra aberta.
+As configuracoes sao salvas e refletidas na barra imediatamente, sem botao manual de aplicacao. O botao Windows abre o menu Iniciar no clique esquerdo e o menu nativo Win+X no clique direito. O backend de minimizar janelas para a barra usa eventos Win32 e adiciona itens temporarios de janela na primeira barra aberta.
 
-As opcoes de indicadores de apps abertos e abrir instancia existente ficam visiveis como futuras etapas porque dependem de mapeamento mais completo entre itens, processos e janelas.
+Os indicadores de apps abertos e a opcao de abrir instancia existente funcionam em modo best-effort para itens `.exe` e atalhos `.lnk` resolviveis. Itens que abrem documentos, URLs, apps modernos/UWP ou comandos indiretos podem nao mapear para um processo existente.
 
 O simbolo inicial do projeto fica em `assets/rock-et-dock-logo.svg` e tambem existe como controle WPF em `src/Dock.App/Controls/BrandLogo.xaml`.
 
@@ -58,8 +59,15 @@ Primeiro MVP:
 
 1. Janela transparente sem borda ancorada na borda da tela.
 2. Itens de arquivo/pasta/separador/lixeira/configuracoes/sair.
-3. Drag-and-drop para adicionar, reordenar e remover.
-4. Importador de skins `background.ini` e `separator.ini`.
+3. Drag-and-drop e menu de contexto para adicionar, reordenar e remover.
+4. Importador de skins `background.ini` e `separator.ini` (pendente).
 5. Launch por `ShellExecuteEx`, auto-hide, topmost e hotkey `Ctrl+Alt+R`.
-6. Indicador de app em execucao.
+6. Indicador de app em execucao para `.exe`/`.lnk` e abertura de instancia existente quando ha janela visivel.
 7. Minimizacao de janelas e previews DWM depois do dock basico estar solido.
+
+Estado atual adicional:
+
+- Barras novas ja nascem com botao Windows, lixeira, configuracoes e sair.
+- `Ctrl+Alt+R` oculta/exibe todas as barras abertas.
+- Operacoes de mover/copiar itens gerenciados e criar/ler atalhos ficam centralizadas nos servicos, para evitar regras duplicadas entre importacao, exportacao e runtime.
+- Ainda ficam fora desta etapa: previews DWM, docklets legados e renderizacao fiel de skins antigas com 9-slice.
