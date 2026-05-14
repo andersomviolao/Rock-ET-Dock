@@ -5,6 +5,4 @@ artifacts/
 *.user
 *.suo
 
-_tools/
-_reference/
-RocketDock-v1.3.5.exe
+RocketDock/

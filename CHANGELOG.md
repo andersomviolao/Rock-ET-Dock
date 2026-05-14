@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+- Moved local RocketDock reference material under the ignored `RocketDock/` folder.
 - Fixed the background opacity slider so its minimum value makes the dock shell fully invisible, including border and shadow.
 - Renamed the repository helper scripts to `dock_run.bat`, `dock_settings.bat`, and `dock_reset.bat`.
 

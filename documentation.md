@@ -11,7 +11,8 @@ Rock ET Dock is a WPF Windows dock and app launcher. It recreates classic dock b
 - `docs`: research notes and implementation requirements.
 - `installer`: Inno Setup packaging script and PowerShell build helper.
 
-Local reference folders such as `_reference` and `_tools`, plus the original `RocketDock-v1.3.5.exe` reference installer, are intentionally outside Git.
+Local clean-room reference material lives under `RocketDock/`, including the original `RocketDock-v1.3.5.exe` installer, extracted `_reference` files, and helper `_tools`. The whole folder is intentionally outside Git.
+Build outputs under `bin/`, `obj/`, and `artifacts/` are generated locally and can be deleted at any time; they are recreated by the build and packaging commands.
 
 ## Requirements
 
