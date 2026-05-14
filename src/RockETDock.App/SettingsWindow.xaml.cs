@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -19,6 +21,7 @@ public partial class SettingsWindow : Window
     private readonly DockItemImporter _importer = new();
     private bool _isLoadingValues;
     private bool _isSavingValues;
+    private bool _isApplyingSearchFilter;
 
     public event EventHandler? SettingsApplied;
     public event EventHandler<DockEdge>? CreateBarRequested;
@@ -28,7 +31,7 @@ public partial class SettingsWindow : Window
         _store = store;
         _bar = bar;
 
-        DataContext = new SettingsWindowText(bar, CurrentText);
+        DataContext = new SettingsWindowText(_store.Current.App, bar, CurrentText);
         InitializeComponent();
         ApplySystemTheme();
         SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
@@ -42,6 +45,7 @@ public partial class SettingsWindow : Window
     {
         var app = _store.Current.App;
 
+        AppDisplayNameBox.Text = GetAppDisplayName(app);
         BarNameBox.Text = _bar.Name;
         RunAtStartupBox.IsChecked = app.RunAtStartup;
         HideLabelsBox.IsChecked = _bar.HideLabels;
@@ -103,6 +107,31 @@ public partial class SettingsWindow : Window
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void Minimize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+    }
+
+    private void SettingsSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ApplySearchFilter();
+    }
+
+    private void SettingsTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.Source == SettingsTabs)
+        {
+            ApplySearchFilter();
+        }
     }
 
     private void CreateLeftDock_Click(object sender, RoutedEventArgs e)
@@ -213,7 +242,7 @@ public partial class SettingsWindow : Window
             SaveImmediately();
         };
 
-        foreach (var textBox in new[] { BarNameBox, FontFamilyBox, LabelColorBox })
+        foreach (var textBox in new[] { AppDisplayNameBox, BarNameBox, FontFamilyBox, LabelColorBox })
         {
             textBox.TextChanged += (_, _) => SaveImmediately();
         }
@@ -249,6 +278,7 @@ public partial class SettingsWindow : Window
             var selectedLanguage = TextCatalog.NormalizeLanguage(LanguageBox.SelectedValue as string ?? app.Language);
             var languageChanged = !string.Equals(app.Language, selectedLanguage, StringComparison.OrdinalIgnoreCase);
             app.Language = selectedLanguage;
+            app.DisplayName = string.IsNullOrWhiteSpace(AppDisplayNameBox.Text) ? UserPaths.AppName : AppDisplayNameBox.Text.Trim();
             _bar.Name = string.IsNullOrWhiteSpace(BarNameBox.Text) ? CurrentText["SettingsBarPrefix"] : BarNameBox.Text.Trim();
             app.RunAtStartup = RunAtStartupBox.IsChecked == true;
             StartupRegistration.SetEnabled(app.RunAtStartup);
@@ -313,8 +343,10 @@ public partial class SettingsWindow : Window
             }
             else
             {
-                DataContext = new SettingsWindowText(_bar, CurrentText);
+                DataContext = new SettingsWindowText(app, _bar, CurrentText);
             }
+
+            ApplySearchFilter();
 
             return true;
         }
@@ -406,7 +438,7 @@ public partial class SettingsWindow : Window
         try
         {
             var text = CurrentText;
-            DataContext = new SettingsWindowText(_bar, text);
+            DataContext = new SettingsWindowText(_store.Current.App, _bar, text);
             LanguageBox.ItemsSource = TextCatalog.LanguageOptions;
             LanguageBox.SelectedValue = text.LanguageCode;
             SetEnumItems(MoveModifierBox, EnumItems<DockMoveModifierKey>(text), _bar.MoveModifierKey);
@@ -415,10 +447,154 @@ public partial class SettingsWindow : Window
             SetEnumItems(HoverEffectBox, EnumItems<HoverEffect>(text), _bar.HoverEffect);
             SetEnumItems(EdgeBox, EnumItems<DockEdge>(text), _bar.Edge);
             SetEnumItems(LayeringBox, EnumItems<DockLayering>(text), _bar.Layering);
+            ApplySearchFilter();
         }
         finally
         {
             _isLoadingValues = wasLoadingValues;
+        }
+    }
+
+    private void ApplySearchFilter()
+    {
+        if (_isApplyingSearchFilter || !IsInitialized)
+        {
+            return;
+        }
+
+        var query = NormalizeSearchText(SettingsSearchBox.Text);
+        var firstMatchingTab = (TabItem?)null;
+        var selectedTabHasMatches = true;
+
+        foreach (var tab in SettingsTabs.Items.OfType<TabItem>())
+        {
+            var tabHasMatches = ApplySearchFilter(tab.Content as DependencyObject, query);
+            if (query.Length > 0 && tabHasMatches && firstMatchingTab is null)
+            {
+                firstMatchingTab = tab;
+            }
+
+            if (ReferenceEquals(SettingsTabs.SelectedItem, tab))
+            {
+                selectedTabHasMatches = tabHasMatches;
+            }
+        }
+
+        if (query.Length == 0 || selectedTabHasMatches || firstMatchingTab is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _isApplyingSearchFilter = true;
+            SettingsTabs.SelectedItem = firstMatchingTab;
+        }
+        finally
+        {
+            _isApplyingSearchFilter = false;
+        }
+    }
+
+    private bool ApplySearchFilter(DependencyObject? root, string query)
+    {
+        if (root is null)
+        {
+            return query.Length == 0;
+        }
+
+        var hasQuery = query.Length > 0;
+        var hasVisibleMatch = false;
+        foreach (var card in LogicalDescendants<Border>(root).Where(IsSearchableSettingsCard))
+        {
+            var visible = !hasQuery || NormalizeSearchText(GetSearchableText(card)).Contains(query, StringComparison.Ordinal);
+            card.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+            hasVisibleMatch |= visible;
+        }
+
+        foreach (var title in LogicalDescendants<TextBlock>(root).Where(IsSectionTitle))
+        {
+            title.Visibility = hasQuery ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        return !hasQuery || hasVisibleMatch;
+    }
+
+    private bool IsSearchableSettingsCard(Border border)
+    {
+        return ReferenceEquals(border.Style, FindResource("SettingsRowCard")) ||
+               ReferenceEquals(border.Style, FindResource("SettingsPanelCard"));
+    }
+
+    private bool IsSectionTitle(TextBlock textBlock)
+    {
+        return ReferenceEquals(textBlock.Style, FindResource("SectionTitleText"));
+    }
+
+    private static string GetSearchableText(DependencyObject root)
+    {
+        var builder = new StringBuilder();
+        foreach (var textBlock in LogicalDescendants<TextBlock>(root))
+        {
+            builder.Append(' ');
+            builder.Append(textBlock.Text);
+        }
+
+        foreach (var textBox in LogicalDescendants<TextBox>(root))
+        {
+            builder.Append(' ');
+            builder.Append(textBox.Text);
+        }
+
+        foreach (var contentControl in LogicalDescendants<ContentControl>(root))
+        {
+            if (contentControl.Content is string text)
+            {
+                builder.Append(' ');
+                builder.Append(text);
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static string NormalizeSearchText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "";
+        }
+
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(char.ToLowerInvariant(character));
+            }
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC).Trim();
+    }
+
+    private static IEnumerable<T> LogicalDescendants<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root))
+        {
+            if (child is T typedChild)
+            {
+                yield return typedChild;
+            }
+
+            if (child is DependencyObject dependencyObject)
+            {
+                foreach (var descendant in LogicalDescendants<T>(dependencyObject))
+                {
+                    yield return descendant;
+                }
+            }
         }
     }
 
@@ -436,6 +612,13 @@ public partial class SettingsWindow : Window
     }
 
     private LocalizedText CurrentText => TextCatalog.Get(_store.Current.App.Language);
+
+    private static string GetAppDisplayName(ApplicationSettings app)
+    {
+        return string.IsNullOrWhiteSpace(app.DisplayName)
+            ? UserPaths.AppName
+            : app.DisplayName.Trim();
+    }
 
     private static IReadOnlyList<EnumItem<T>> EnumItems<T>(LocalizedText text) where T : struct, Enum
     {
@@ -484,29 +667,29 @@ public partial class SettingsWindow : Window
                 background: Color.FromRgb(243, 243, 243),
                 sidebar: Color.FromRgb(243, 243, 243),
                 card: Color.FromRgb(255, 255, 255),
-                cardHover: Color.FromRgb(250, 250, 250),
+                cardHover: Color.FromRgb(249, 249, 249),
                 text: Color.FromRgb(28, 28, 28),
                 secondaryText: Color.FromRgb(91, 91, 91),
-                border: Color.FromRgb(224, 224, 224),
-                selectedNav: Color.FromRgb(230, 230, 230),
+                border: Color.FromRgb(225, 225, 225),
+                selectedNav: Color.FromRgb(232, 232, 232),
                 input: Color.FromRgb(255, 255, 255),
-                button: Color.FromRgb(247, 247, 247),
-                accent: Color.FromRgb(0, 120, 212));
+                button: Color.FromRgb(251, 251, 251),
+                accent: Color.FromRgb(0, 103, 192));
             return;
         }
 
         SetThemeBrushes(
-            background: Color.FromRgb(31, 31, 31),
-            sidebar: Color.FromRgb(31, 31, 31),
+            background: Color.FromRgb(32, 32, 32),
+            sidebar: Color.FromRgb(32, 32, 32),
             card: Color.FromRgb(43, 43, 43),
-            cardHover: Color.FromRgb(51, 51, 51),
-            text: Color.FromRgb(245, 245, 245),
-            secondaryText: Color.FromRgb(194, 194, 194),
-            border: Color.FromRgb(61, 61, 61),
-            selectedNav: Color.FromRgb(49, 49, 49),
+            cardHover: Color.FromRgb(50, 50, 50),
+            text: Color.FromRgb(255, 255, 255),
+            secondaryText: Color.FromRgb(200, 200, 200),
+            border: Color.FromRgb(58, 58, 58),
+            selectedNav: Color.FromRgb(45, 45, 45),
             input: Color.FromRgb(43, 43, 43),
-            button: Color.FromRgb(55, 55, 55),
-            accent: Color.FromRgb(96, 205, 255));
+            button: Color.FromRgb(51, 51, 51),
+            accent: Color.FromRgb(76, 194, 255));
     }
 
     private void SetThemeBrushes(
@@ -555,14 +738,20 @@ public partial class SettingsWindow : Window
 
     public sealed class SettingsWindowText
     {
-        public SettingsWindowText(DockBarSettings bar, LocalizedText text)
+        public SettingsWindowText(ApplicationSettings app, DockBarSettings bar, LocalizedText text)
         {
             Text = text;
+            AppDisplayName = GetAppDisplayName(app);
+            WindowTitleText = $"{AppDisplayName} - {text["SettingsTitle"]}";
             BarNameText = $"{text["SettingsBarPrefix"]}: {bar.Name}";
             ConfigPathText = UserPaths.ConfigFile;
         }
 
         public LocalizedText Text { get; }
+
+        public string AppDisplayName { get; }
+
+        public string WindowTitleText { get; }
 
         public string BarNameText { get; }
 

@@ -2,46 +2,107 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:RockETDock.App.Controls"
-        Title="{Binding Text[SettingsWindowTitle]}"
-        Width="1040"
-        Height="720"
-        MinWidth="900"
-        MinHeight="600"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="{Binding WindowTitleText}"
+        Width="1500"
+        Height="880"
+        MinWidth="1000"
+        MinHeight="640"
         Icon="Assets/rock-et-dock-icon.ico"
         Background="{DynamicResource SettingsBackgroundBrush}"
         Foreground="{DynamicResource SettingsTextBrush}"
-        WindowStartupLocation="CenterOwner">
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="44"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
     <Window.Resources>
-        <SolidColorBrush x:Key="SettingsBackgroundBrush" Color="#F3F3F3" />
-        <SolidColorBrush x:Key="SettingsSidebarBrush" Color="#F3F3F3" />
-        <SolidColorBrush x:Key="SettingsCardBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="SettingsCardHoverBrush" Color="#FAFAFA" />
-        <SolidColorBrush x:Key="SettingsTextBrush" Color="#1C1C1C" />
-        <SolidColorBrush x:Key="SettingsSecondaryTextBrush" Color="#5B5B5B" />
-        <SolidColorBrush x:Key="SettingsBorderBrush" Color="#E0E0E0" />
-        <SolidColorBrush x:Key="SettingsSelectedNavBrush" Color="#E6E6E6" />
-        <SolidColorBrush x:Key="SettingsInputBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="SettingsButtonBrush" Color="#F7F7F7" />
-        <SolidColorBrush x:Key="SettingsAccentBrush" Color="#0078D4" />
+        <SolidColorBrush x:Key="SettingsBackgroundBrush" Color="#202020" />
+        <SolidColorBrush x:Key="SettingsSidebarBrush" Color="#202020" />
+        <SolidColorBrush x:Key="SettingsCardBrush" Color="#2B2B2B" />
+        <SolidColorBrush x:Key="SettingsCardHoverBrush" Color="#323232" />
+        <SolidColorBrush x:Key="SettingsTextBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="SettingsSecondaryTextBrush" Color="#C8C8C8" />
+        <SolidColorBrush x:Key="SettingsBorderBrush" Color="#3A3A3A" />
+        <SolidColorBrush x:Key="SettingsSelectedNavBrush" Color="#2D2D2D" />
+        <SolidColorBrush x:Key="SettingsInputBrush" Color="#2B2B2B" />
+        <SolidColorBrush x:Key="SettingsButtonBrush" Color="#333333" />
+        <SolidColorBrush x:Key="SettingsAccentBrush" Color="#4CC2FF" />
 
         <Style TargetType="{x:Type TextBlock}">
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
-        <Style TargetType="{x:Type CheckBox}">
+        <Style x:Key="PageTitleText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,20" />
+        </Style>
+
+        <Style x:Key="SectionTitleText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,18,0,8" />
+        </Style>
+
+        <Style x:Key="SecondaryText" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsSecondaryTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="IconText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
-            <Setter Property="Margin" Value="0,8,0,8" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="SettingTitleText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="SettingSubtitleText" BasedOn="{StaticResource SecondaryText}" TargetType="{x:Type TextBlock}">
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+
+        <Style x:Key="SettingsRowCard" TargetType="{x:Type Border}">
+            <Setter Property="MinHeight" Value="66" />
+            <Setter Property="Background" Value="{DynamicResource SettingsCardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="Margin" Value="0,0,0,5" />
+        </Style>
+
+        <Style x:Key="SettingsPanelCard" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="{DynamicResource SettingsCardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="22" />
+            <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
 
         <Style TargetType="{x:Type TextBox}">
             <Setter Property="Height" Value="36" />
-            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="MinWidth" Value="260" />
+            <Setter Property="Padding" Value="12,7" />
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
             <Setter Property="Background" Value="{DynamicResource SettingsInputBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CaretBrush" Value="{DynamicResource SettingsTextBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TextBox}">
@@ -57,18 +118,101 @@
             </Setter>
         </Style>
 
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SettingsInputBrush}" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border x:Name="ItemChrome"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource SettingsCardHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource SettingsSelectedNavBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="{x:Type ComboBox}">
             <Setter Property="Height" Value="36" />
-            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinWidth" Value="260" />
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
             <Setter Property="Background" Value="{DynamicResource SettingsInputBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                          ClickMode="Press"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Border x:Name="ComboChrome"
+                                                Background="{DynamicResource SettingsInputBrush}"
+                                                BorderBrush="{DynamicResource SettingsBorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="4" />
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ComboChrome" Property="Background" Value="{DynamicResource SettingsCardHoverBrush}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Margin="12,0,36,0"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                              IsHitTestVisible="False" />
+                            <TextBlock Margin="0,0,12,0"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       FontSize="12"
+                                       IsHitTestVisible="False"
+                                       Text="&#xE70D;" />
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   PopupAnimation="Fade">
+                                <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="280"
+                                        Background="{DynamicResource SettingsInputBrush}"
+                                        BorderBrush="{DynamicResource SettingsBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                    <ScrollViewer>
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style TargetType="{x:Type Button}">
-            <Setter Property="MinWidth" Value="96" />
             <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Padding" Value="16,0" />
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
             <Setter Property="Background" Value="{DynamicResource SettingsButtonBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
@@ -80,11 +224,10 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}" />
+                                CornerRadius="4">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -102,50 +245,158 @@
             </Setter>
         </Style>
 
-        <Style x:Key="PageTitleText" TargetType="{x:Type TextBlock}">
-            <Setter Property="FontSize" Value="28" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,0,0,22" />
+        <Style x:Key="AccentButton" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Foreground" Value="#101010" />
+            <Setter Property="Background" Value="{DynamicResource SettingsAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsAccentBrush}" />
         </Style>
 
-        <Style x:Key="SectionTitleText" TargetType="{x:Type TextBlock}">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-
-        <Style x:Key="SecondaryText" TargetType="{x:Type TextBlock}">
-            <Setter Property="Foreground" Value="{DynamicResource SettingsSecondaryTextBrush}" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-
-        <Style x:Key="SettingsCard" TargetType="{x:Type Border}">
-            <Setter Property="Background" Value="{DynamicResource SettingsCardBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="18" />
-            <Setter Property="Margin" Value="0,0,0,12" />
-        </Style>
-
-        <Style x:Key="SettingLabel" TargetType="{x:Type TextBlock}">
+        <Style x:Key="ToggleSwitch" TargetType="{x:Type CheckBox}">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="24" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Margin" Value="0,0,18,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <Border x:Name="SwitchTrack"
+                                Width="40"
+                                Height="20"
+                                Background="Transparent"
+                                BorderBrush="#8F8F8F"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <Ellipse x:Name="SwitchThumb"
+                                     Width="12"
+                                     Height="12"
+                                     Margin="4,0,0,0"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"
+                                     Fill="#DCDCDC" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="SwitchTrack" Property="Background" Value="{DynamicResource SettingsAccentBrush}" />
+                                <Setter TargetName="SwitchTrack" Property="BorderBrush" Value="{DynamicResource SettingsAccentBrush}" />
+                                <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right" />
+                                <Setter TargetName="SwitchThumb" Property="Margin" Value="0,0,4,0" />
+                                <Setter TargetName="SwitchThumb" Property="Fill" Value="#111111" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SwitchTrack" Property="BorderBrush" Value="{DynamicResource SettingsTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="SwitchTrack" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Slider}">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsAccentBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Slider}">
+                        <Grid Height="{TemplateBinding Height}">
+                            <Track x:Name="PART_Track"
+                                   VerticalAlignment="Center">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}"
+                                                  Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                <Border Height="3"
+                                                        VerticalAlignment="Center"
+                                                        Background="{DynamicResource SettingsAccentBrush}"
+                                                        CornerRadius="2" />
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="18"
+                                           Height="18">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Ellipse Fill="{DynamicResource SettingsAccentBrush}"
+                                                         Stroke="{DynamicResource SettingsCardHoverBrush}"
+                                                         StrokeThickness="4" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}"
+                                                  Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                <Border Height="3"
+                                                        VerticalAlignment="Center"
+                                                        Background="#9A9A9A"
+                                                        CornerRadius="2" />
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track"
+                                   IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                                  Opacity="0" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Border Width="3"
+                                                        Margin="0,4"
+                                                        HorizontalAlignment="Center"
+                                                        Background="#8A8A8A"
+                                                        CornerRadius="2" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                                  Opacity="0" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="NavTabItem" TargetType="{x:Type TabItem}">
-            <Setter Property="Width" Value="260" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Padding" Value="14,9" />
-            <Setter Property="Margin" Value="20,2,16,2" />
+            <Setter Property="Width" Value="280" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Margin" Value="26,1,26,1" />
+            <Setter Property="Padding" Value="12,0" />
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TabItem}">
                         <Border x:Name="NavItem"
                                 Background="Transparent"
-                                CornerRadius="5"
+                                CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -155,14 +406,15 @@
                                 <Border x:Name="AccentRail"
                                         Width="3"
                                         Height="18"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
                                         Background="{DynamicResource SettingsAccentBrush}"
                                         CornerRadius="2"
                                         Visibility="Collapsed" />
                                 <ContentPresenter Grid.Column="1"
-                                                  Margin="10,0,0,0"
+                                                  Margin="8,0,0,0"
                                                   VerticalAlignment="Center"
-                                                  ContentSource="Header"
-                                                  RecognizesAccessKey="True" />
+                                                  ContentSource="Header" />
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -179,366 +431,783 @@
             </Setter>
         </Style>
 
+        <Style x:Key="WindowCaptionButton" TargetType="{x:Type Button}">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="46" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource SettingsSecondaryTextBrush}" />
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="CaptionButtonChrome"
+                                Background="{TemplateBinding Background}">
+                            <TextBlock HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontFamily="{TemplateBinding FontFamily}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       Text="{TemplateBinding Content}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CaptionButtonChrome" Property="Background" Value="{DynamicResource SettingsCardHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="CaptionButtonChrome" Property="Background" Value="{DynamicResource SettingsSelectedNavBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="{x:Type TabControl}">
             <Setter Property="Background" Value="{DynamicResource SettingsBackgroundBrush}" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="TabStripPlacement" Value="Left" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabControl}">
+                        <Grid Background="{DynamicResource SettingsBackgroundBrush}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="332" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0"
+                                  Background="{DynamicResource SettingsSidebarBrush}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="104" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid Margin="26,16,26,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <controls:BrandLogo Width="58"
+                                                        Height="58"
+                                                        VerticalAlignment="Top" />
+                                    <StackPanel Grid.Column="1"
+                                                Margin="14,8,0,0"
+                                                VerticalAlignment="Top">
+                                        <TextBlock FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Text="anderson" />
+                                        <TextBlock Style="{StaticResource SecondaryText}"
+                                                   Text="Local Account" />
+                                    </StackPanel>
+                                </Grid>
+                                <ScrollViewer Grid.Row="1"
+                                              VerticalScrollBarVisibility="Disabled">
+                                    <TabPanel IsItemsHost="True"
+                                              KeyboardNavigation.TabIndex="1"
+                                              Margin="0,10,0,24" />
+                                </ScrollViewer>
+                            </Grid>
+                            <ContentPresenter x:Name="PART_SelectedContentHost"
+                                              Grid.Column="1"
+                                              Margin="76,18,92,0"
+                                              ContentSource="SelectedContent" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
     <Grid Background="{DynamicResource SettingsBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="74" />
+            <RowDefinition Height="44" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="332" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Margin="24,16,28,8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock FontSize="18"
-                           Margin="0,0,12,0"
-                           Text="&lt;" />
-                <TextBlock FontSize="13"
+        <Grid Grid.Row="0"
+              Grid.Column="0"
+              Margin="26,0,0,0">
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           FontSize="13"
+                           Margin="0,0,18,0"
+                           Text="&#xE72B;" />
+                <TextBlock FontSize="12"
                            FontWeight="SemiBold"
-                           VerticalAlignment="Center"
-                           Text="{Binding Text[SettingsWindowTitle]}" />
+                           Text="{Binding Text[SettingsTitle]}" />
             </StackPanel>
-
-            <Border Grid.Column="1"
-                    Width="520"
-                    Height="34"
-                    HorizontalAlignment="Left"
-                    Background="{DynamicResource SettingsInputBrush}"
-                    BorderBrush="{DynamicResource SettingsBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="17">
-                <StackPanel Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            Margin="14,0">
-                    <TextBlock FontFamily="Segoe MDL2 Assets"
-                               FontSize="13"
-                               Margin="0,0,10,0"
-                               Text="&#xE721;" />
-                    <TextBlock Foreground="{DynamicResource SettingsSecondaryTextBrush}"
-                               VerticalAlignment="Center"
-                               Text="{Binding Text[SettingsSearchPlaceholder]}" />
-                </StackPanel>
-            </Border>
         </Grid>
 
-        <TabControl Grid.Row="1"
-                    TabStripPlacement="Left"
-                    SelectedIndex="0">
+        <Border Grid.Row="0"
+                Grid.Column="1"
+                Width="520"
+                Height="34"
+                Margin="180,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Background="{DynamicResource SettingsInputBrush}"
+                BorderBrush="{DynamicResource SettingsBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="17"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+            <Grid Margin="14,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           FontSize="15"
+                           Margin="0,0,12,0"
+                           VerticalAlignment="Center"
+                           Text="&#xE721;" />
+                <Grid Grid.Column="1"
+                      VerticalAlignment="Center">
+                    <TextBox x:Name="SettingsSearchBox"
+                             Height="32"
+                             MinWidth="0"
+                             Padding="0"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             TextChanged="SettingsSearchBox_TextChanged" />
+                    <TextBlock Foreground="{DynamicResource SettingsSecondaryTextBrush}"
+                               IsHitTestVisible="False"
+                               VerticalAlignment="Center"
+                               Text="{Binding Text[SettingsSearchPlaceholder]}">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource SecondaryText}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SettingsSearchBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="0"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    Orientation="Horizontal">
+            <Button Style="{StaticResource WindowCaptionButton}"
+                    Click="Minimize_Click"
+                    Content="&#xE921;" />
+            <Button Style="{StaticResource WindowCaptionButton}"
+                    Click="MaximizeRestore_Click"
+                    Content="&#xE922;" />
+            <Button Style="{StaticResource WindowCaptionButton}"
+                    Click="Close_Click"
+                    Content="&#xE8BB;" />
+        </StackPanel>
+
+        <TabControl x:Name="SettingsTabs"
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
+                    SelectedIndex="0"
+                    SelectionChanged="SettingsTabs_SelectionChanged">
             <TabControl.Resources>
                 <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource NavTabItem}" />
             </TabControl.Resources>
 
-            <TabItem Header="{Binding Text[SettingsGeneralTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
-                    <StackPanel MaxWidth="920">
-                        <DockPanel Margin="0,0,0,22">
-                            <controls:BrandLogo Width="72"
-                                                Height="72"
-                                                DockPanel.Dock="Left"
-                                                Margin="0,0,18,0" />
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource PageTitleText}"
-                                           Margin="0,0,0,4"
-                                           Text="Rock ET Dock" />
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="24" Style="{StaticResource IconText}" Text="&#xE80F;" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding Text[SettingsGeneralTab]}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000" Margin="0,18,0,42">
+                        <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsGeneralTab]}" />
+
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="260" />
+                                <ColumnDefinition Width="220" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="116"
+                                    Height="68"
+                                    Background="{DynamicResource SettingsCardBrush}"
+                                    BorderBrush="{DynamicResource SettingsBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="5">
+                                <controls:BrandLogo Width="54" Height="54" />
+                            </Border>
+                            <StackPanel Grid.Column="1"
+                                        Margin="18,0,0,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding AppDisplayName}" />
                                 <TextBlock Style="{StaticResource SecondaryText}"
                                            Text="{Binding BarNameText}" />
                             </StackPanel>
-                        </DockPanel>
-
-                        <TextBlock Style="{StaticResource SectionTitleText}"
-                                   Text="{Binding Text[SettingsCurrentDockTitle]}" />
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsBarName]}" />
-                                    <TextBox x:Name="BarNameBox" Grid.Column="1" />
-                                </Grid>
-
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsLanguage]}" />
-                                    <ComboBox x:Name="LanguageBox"
-                                              Grid.Column="1"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value" />
-                                </Grid>
-
-                                <CheckBox x:Name="RunAtStartupBox" Content="{Binding Text[SettingsRunAtStartup]}" />
-                                <CheckBox x:Name="LockItemsBox" Content="{Binding Text[SettingsLockItems]}" />
-                                <CheckBox x:Name="AutoHideBox" Content="{Binding Text[SettingsAutoHide]}" />
-                                <CheckBox x:Name="WindowsButtonBox" Content="{Binding Text[SettingsWindowsButton]}" />
-                                <CheckBox x:Name="RecycleBinBox" Content="{Binding Text[SettingsRecycleBin]}" />
-                                <CheckBox x:Name="HideNativeTaskbarBox" Content="{Binding Text[SettingsHideNativeTaskbar]}" />
-                            </StackPanel>
-                        </Border>
-
-                        <TextBlock Style="{StaticResource SectionTitleText}"
-                                   Text="{Binding Text[SettingsCreateDockTitle]}" />
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
+                            <StackPanel Grid.Column="2"
+                                        VerticalAlignment="Center">
+                                <TextBlock FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding Text[SettingsCurrentDockTitle]}" />
                                 <TextBlock Style="{StaticResource SecondaryText}"
-                                           Margin="0,0,0,14"
-                                           Text="{Binding Text[SettingsCreateDockSubtitle]}" />
-                                <WrapPanel>
-                                    <Button Margin="0,0,8,8"
-                                            Click="CreateLeftDock_Click"
-                                            Content="{Binding Text[EnumDockEdgeLeft]}" />
-                                    <Button Margin="0,0,8,8"
-                                            Click="CreateRightDock_Click"
-                                            Content="{Binding Text[EnumDockEdgeRight]}" />
-                                    <Button Margin="0,0,8,8"
-                                            Click="CreateTopDock_Click"
-                                            Content="{Binding Text[EnumDockEdgeTop]}" />
-                                    <Button Margin="0,0,8,8"
-                                            Click="CreateBottomDock_Click"
-                                            Content="{Binding Text[EnumDockEdgeBottom]}" />
-                                </WrapPanel>
+                                           Text="{Binding ConfigPathText}"
+                                           TextTrimming="CharacterEllipsis" />
                             </StackPanel>
+                            <StackPanel Grid.Column="3"
+                                        VerticalAlignment="Center">
+                                <TextBlock FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding Text[SettingsCreateDockTitle]}" />
+                                <TextBlock Style="{StaticResource SecondaryText}"
+                                           Text="{Binding Text[SettingsCreateDockSubtitle]}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{Binding Text[SettingsCurrentDockTitle]}" />
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="300" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE946;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsAppDisplayName]}" />
+                                <TextBox x:Name="AppDisplayNameBox" Grid.Column="2" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="300" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8D4;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsBarName]}" />
+                                <TextBox x:Name="BarNameBox" Grid.Column="2" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="300" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE774;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsLanguage]}" />
+                                <ComboBox x:Name="LanguageBox"
+                                          Grid.Column="2"
+                                          DisplayMemberPath="Label"
+                                          SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7E8;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsRunAtStartup]}" />
+                                <CheckBox x:Name="RunAtStartupBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE72E;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsLockItems]}" />
+                                <CheckBox x:Name="LockItemsBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE811;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsAutoHide]}" />
+                                <CheckBox x:Name="AutoHideBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE782;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsWindowsButton]}" />
+                                <CheckBox x:Name="WindowsButtonBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE74D;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsRecycleBin]}" />
+                                <CheckBox x:Name="RecycleBinBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7F4;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsHideNativeTaskbar]}" />
+                                <CheckBox x:Name="HideNativeTaskbarBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
                         </Border>
 
-                        <TextBlock Style="{StaticResource SectionTitleText}"
-                                   Text="{Binding Text[SettingsDragSectionTitle]}" />
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsMoveModifierKey]}" />
-                                    <ComboBox x:Name="MoveModifierBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsGifModifierKey]}" />
-                                    <ComboBox x:Name="GifModifierBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <TextBlock Margin="0,6,0,4" Text="{Binding Text[SettingsAutoHideDelay]}" />
-                                <Slider x:Name="AutoHideDelaySlider"
-                                        Minimum="0"
-                                        Maximum="2000"
-                                        TickFrequency="50"
-                                        IsSnapToTickEnabled="True"
-                                        Margin="0,0,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsAutoHideDuration]}" />
-                                <Slider x:Name="AutoHideDurationSlider"
-                                        Minimum="0"
-                                        Maximum="800"
-                                        TickFrequency="20"
-                                        IsSnapToTickEnabled="True"
-                                        Margin="0,0,0,12" />
-                                <TextBlock Margin="0,6,0,4" Text="{Binding Text[SettingsBarFolder]}" />
-                                <TextBox x:Name="BarFolderBox" IsReadOnly="True" />
-                            </StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{Binding Text[SettingsCreateDockTitle]}" />
+                        <Border Style="{StaticResource SettingsPanelCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource SecondaryText}"
+                                           VerticalAlignment="Center"
+                                           Text="{Binding Text[SettingsCreateDockSubtitle]}" />
+                                <WrapPanel Grid.Column="1">
+                                    <Button Margin="8,0,0,0" Click="CreateLeftDock_Click" Content="{Binding Text[EnumDockEdgeLeft]}" />
+                                    <Button Margin="8,0,0,0" Click="CreateRightDock_Click" Content="{Binding Text[EnumDockEdgeRight]}" />
+                                    <Button Margin="8,0,0,0" Click="CreateTopDock_Click" Content="{Binding Text[EnumDockEdgeTop]}" />
+                                    <Button Margin="8,0,0,0" Click="CreateBottomDock_Click" Content="{Binding Text[EnumDockEdgeBottom]}" />
+                                </WrapPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{Binding Text[SettingsDragSectionTitle]}" />
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="300" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7C2;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsMoveModifierKey]}" />
+                                <ComboBox x:Name="MoveModifierBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="300" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE91B;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsGifModifierKey]}" />
+                                <ComboBox x:Name="GifModifierBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="360" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE823;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsAutoHideDelay]}" />
+                                <Slider x:Name="AutoHideDelaySlider" Grid.Column="2" Minimum="0" Maximum="2000" TickFrequency="50" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="360" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE916;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsAutoHideDuration]}" />
+                                <Slider x:Name="AutoHideDurationSlider" Grid.Column="2" Minimum="0" Maximum="800" TickFrequency="20" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8B7;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsBarFolder]}" />
+                                <TextBox x:Name="BarFolderBox" Grid.Column="2" IsReadOnly="True" />
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="{Binding Text[SettingsIconsTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
-                    <StackPanel MaxWidth="920">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="24" Style="{StaticResource IconText}" Text="&#xE8A7;" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding Text[SettingsIconsTab]}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000" Margin="0,18,0,42">
                         <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsIconsTab]}" />
 
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Text[SettingsIconSize]}" />
-                                <Slider x:Name="IconSizeSlider" Minimum="12" Maximum="96" TickFrequency="2" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsIconOpacity]}" />
-                                <Slider x:Name="IconOpacitySlider" Minimum="15" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <CheckBox x:Name="HideLabelsBox" Content="{Binding Text[SettingsHideLabels]}" />
-                                <TextBlock Text="{Binding Text[SettingsIconSpacing]}" />
-                                <Slider x:Name="IconSpacingSlider" Minimum="0" Maximum="40" TickFrequency="2" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsIconBottomMargin]}" />
-                                <Slider x:Name="IconBottomMarginSlider" Minimum="0" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsIconQuality]}" />
-                                    <ComboBox x:Name="IconQualityBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <CheckBox x:Name="ZoomEnabledBox" Content="{Binding Text[SettingsZoomEnabled]}" />
-                                <CheckBox x:Name="ZoomOpaqueBox" Content="{Binding Text[SettingsZoomOpaque]}" />
-                                <TextBlock Text="{Binding Text[SettingsZoomSize]}" />
-                                <Slider x:Name="ZoomSizeSlider" Minimum="16" Maximum="128" TickFrequency="2" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsZoomRange]}" />
-                                <Slider x:Name="ZoomRangeSlider" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsZoomDuration]}" />
-                                <Slider x:Name="ZoomDurationSlider" Minimum="60" Maximum="500" TickFrequency="20" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <Grid Margin="0,0,0,14">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsHoverEffect]}" />
-                                    <ComboBox x:Name="HoverEffectBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <Button HorizontalAlignment="Left"
-                                        Click="AddGif_Click"
-                                        Content="{Binding Text[SettingsAddAnimatedGif]}" />
-                            </StackPanel>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8A7;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsIconSize]}" />
+                                <Slider x:Name="IconSizeSlider" Grid.Column="2" Minimum="12" Maximum="96" TickFrequency="2" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE9A1;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsIconOpacity]}" />
+                                <Slider x:Name="IconOpacitySlider" Grid.Column="2" Minimum="15" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8D2;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsHideLabels]}" />
+                                <CheckBox x:Name="HideLabelsBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE9F5;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsIconSpacing]}" />
+                                <Slider x:Name="IconSpacingSlider" Grid.Column="2" Minimum="0" Maximum="40" TickFrequency="2" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE74B;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsIconBottomMargin]}" />
+                                <Slider x:Name="IconBottomMarginSlider" Grid.Column="2" Minimum="0" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7F8;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsIconQuality]}" />
+                                <ComboBox x:Name="IconQualityBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{Binding Text[SettingsZoomEnabled]}" />
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8A3;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsZoomEnabled]}" />
+                                <CheckBox x:Name="ZoomEnabledBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8C8;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsZoomOpaque]}" />
+                                <CheckBox x:Name="ZoomOpaqueBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8A3;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsZoomSize]}" />
+                                <Slider x:Name="ZoomSizeSlider" Grid.Column="2" Minimum="16" Maximum="128" TickFrequency="2" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8B3;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsZoomRange]}" />
+                                <Slider x:Name="ZoomRangeSlider" Grid.Column="2" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE916;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsZoomDuration]}" />
+                                <Slider x:Name="ZoomDurationSlider" Grid.Column="2" Minimum="60" Maximum="500" TickFrequency="20" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7C2;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsHoverEffect]}" />
+                                <ComboBox x:Name="HoverEffectBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsPanelCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsAddAnimatedGif]}" />
+                                <Button Grid.Column="1" Style="{StaticResource AccentButton}" Click="AddGif_Click" Content="{Binding Text[SettingsAddAnimatedGif]}" />
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="{Binding Text[SettingsPositionTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
-                    <StackPanel MaxWidth="920">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="24" Style="{StaticResource IconText}" Text="&#xE707;" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding Text[SettingsPositionTab]}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000" Margin="0,18,0,42">
                         <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsPositionTab]}" />
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsMonitor]}" />
-                                    <ComboBox x:Name="MonitorBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsEdge]}" />
-                                    <ComboBox x:Name="EdgeBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsLayering]}" />
-                                    <ComboBox x:Name="LayeringBox" Grid.Column="1" SelectedValuePath="Value" />
-                                </Grid>
-                                <TextBlock Text="{Binding Text[SettingsBarWidth]}" />
-                                <Slider x:Name="BarWidthSlider" Minimum="0" Maximum="1800" TickFrequency="20" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsBarHeight]}" />
-                                <Slider x:Name="BarHeightSlider" Minimum="0" Maximum="320" TickFrequency="4" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsOffset]}" />
-                                <Slider x:Name="OffsetSlider" Minimum="-220" Maximum="200" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsCenterOffset]}" />
-                                <Slider x:Name="CenterOffsetSlider" Minimum="-800" Maximum="800" TickFrequency="10" TickPlacement="BottomRight" IsSnapToTickEnabled="True" Margin="0,4,0,2" />
-                                <TextBlock HorizontalAlignment="Center"
-                                           Style="{StaticResource SecondaryText}"
-                                           Text="{Binding Text[SettingsCenterHint]}" />
-                            </StackPanel>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7F4;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsMonitor]}" />
+                                <ComboBox x:Name="MonitorBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE707;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsEdge]}" />
+                                <ComboBox x:Name="EdgeBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8F1;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsLayering]}" />
+                                <ComboBox x:Name="LayeringBox" Grid.Column="2" SelectedValuePath="Value" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE740;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsBarWidth]}" />
+                                <Slider x:Name="BarWidthSlider" Grid.Column="2" Minimum="0" Maximum="1800" TickFrequency="20" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE73F;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsBarHeight]}" />
+                                <Slider x:Name="BarHeightSlider" Grid.Column="2" Minimum="0" Maximum="320" TickFrequency="4" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7AD;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsOffset]}" />
+                                <Slider x:Name="OffsetSlider" Grid.Column="2" Minimum="-220" Maximum="200" TickFrequency="5" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE9D9;" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsCenterOffset]}" />
+                                    <TextBlock Style="{StaticResource SettingSubtitleText}" Text="{Binding Text[SettingsCenterHint]}" />
+                                </StackPanel>
+                                <Slider x:Name="CenterOffsetSlider" Grid.Column="2" Minimum="-800" Maximum="800" TickFrequency="10" TickPlacement="BottomRight" IsSnapToTickEnabled="True" />
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="{Binding Text[SettingsStyleTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
-                    <StackPanel MaxWidth="920">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="24" Style="{StaticResource IconText}" Text="&#xE771;" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding Text[SettingsStyleTab]}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000" Margin="0,18,0,42">
                         <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsStyleTab]}" />
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsTheme]}" />
-                                    <ComboBox x:Name="ThemeBox" Grid.Column="1" />
-                                </Grid>
-                                <TextBlock Text="{Binding Text[SettingsBackgroundOpacity]}" />
-                                <Slider x:Name="BackgroundOpacitySlider" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsShellCornerRadius]}" />
-                                <Slider x:Name="ShellCornerRadiusSlider" Minimum="0" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <TextBlock Text="{Binding Text[SettingsTileCornerRadius]}" />
-                                <Slider x:Name="TileCornerRadiusSlider" Minimum="0" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsFontFamily]}" />
-                                    <TextBox x:Name="FontFamilyBox" Grid.Column="1" />
-                                </Grid>
-                                <TextBlock Text="{Binding Text[SettingsFontSize]}" />
-                                <Slider x:Name="FontSizeSlider" Minimum="7" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="280" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsLabelColor]}" />
-                                    <TextBox x:Name="LabelColorBox" Grid.Column="1" />
-                                </Grid>
-                            </StackPanel>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE790;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsTheme]}" />
+                                <ComboBox x:Name="ThemeBox" Grid.Column="2" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE91B;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsBackgroundOpacity]}" />
+                                <Slider x:Name="BackgroundOpacitySlider" Grid.Column="2" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE9B7;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsShellCornerRadius]}" />
+                                <Slider x:Name="ShellCornerRadiusSlider" Grid.Column="2" Minimum="0" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE9B6;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsTileCornerRadius]}" />
+                                <Slider x:Name="TileCornerRadiusSlider" Grid.Column="2" Minimum="0" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8D2;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsFontFamily]}" />
+                                <TextBox x:Name="FontFamilyBox" Grid.Column="2" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8D2;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsFontSize]}" />
+                                <Slider x:Name="FontSizeSlider" Grid.Column="2" Minimum="7" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE790;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsLabelColor]}" />
+                                <TextBox x:Name="LabelColorBox" Grid.Column="2" />
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="{Binding Text[SettingsBehaviorTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
-                    <StackPanel MaxWidth="920">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="24" Style="{StaticResource IconText}" Text="&#xE713;" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding Text[SettingsBehaviorTab]}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="1000" Margin="0,18,0,42">
                         <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsBehaviorTab]}" />
-                        <Border Style="{StaticResource SettingsCard}">
-                            <StackPanel>
-                                <CheckBox x:Name="MinimizeWindowsBox"
-                                          ToolTip="{Binding Text[SettingsMinimizeWindowsTooltip]}"
-                                          Content="{Binding Text[SettingsMinimizeWindows]}" />
-                                <CheckBox x:Name="DisableMinimizeAnimationsBox"
-                                          IsEnabled="False"
-                                          ToolTip="{Binding Text[SettingsDisableMinimizeAnimationsTooltip]}"
-                                          Content="{Binding Text[SettingsDisableMinimizeAnimations]}" />
-                                <CheckBox x:Name="ShowRunningIndicatorsBox"
-                                          ToolTip="{Binding Text[SettingsShowRunningIndicatorsTooltip]}"
-                                          Content="{Binding Text[SettingsShowRunningIndicators]}" />
-                                <CheckBox x:Name="OpenRunningInstancesBox"
-                                          ToolTip="{Binding Text[SettingsOpenRunningInstancesTooltip]}"
-                                          Content="{Binding Text[SettingsOpenRunningInstances]}" />
-                                <CheckBox x:Name="PopupOnMouseoverBox"
-                                          Content="{Binding Text[SettingsPopupOnMouseover]}" />
-                                <TextBlock Margin="0,10,0,4" Text="{Binding Text[SettingsPopupDelay]}" />
-                                <Slider x:Name="PopupDelaySlider" Minimum="0" Maximum="1500" TickFrequency="50" IsSnapToTickEnabled="True" />
-                            </StackPanel>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8AE;" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsMinimizeWindows]}" />
+                                    <TextBlock Style="{StaticResource SettingSubtitleText}" Text="{Binding Text[SettingsMinimizeWindowsTooltip]}" />
+                                </StackPanel>
+                                <CheckBox x:Name="MinimizeWindowsBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7F8;" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsDisableMinimizeAnimations]}" />
+                                    <TextBlock Style="{StaticResource SettingSubtitleText}" Text="{Binding Text[SettingsDisableMinimizeAnimationsTooltip]}" />
+                                </StackPanel>
+                                <CheckBox x:Name="DisableMinimizeAnimationsBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE7B3;" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsShowRunningIndicators]}" />
+                                    <TextBlock Style="{StaticResource SettingSubtitleText}" Text="{Binding Text[SettingsShowRunningIndicatorsTooltip]}" />
+                                </StackPanel>
+                                <CheckBox x:Name="ShowRunningIndicatorsBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8B7;" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsOpenRunningInstances]}" />
+                                    <TextBlock Style="{StaticResource SettingSubtitleText}" Text="{Binding Text[SettingsOpenRunningInstancesTooltip]}" />
+                                </StackPanel>
+                                <CheckBox x:Name="OpenRunningInstancesBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE8A3;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsPopupOnMouseover]}" />
+                                <CheckBox x:Name="PopupOnMouseoverBox" Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitch}" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{StaticResource SettingsRowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE916;" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource SettingTitleText}" Text="{Binding Text[SettingsPopupDelay]}" />
+                                <Slider x:Name="PopupDelaySlider" Grid.Column="2" Minimum="0" Maximum="1500" TickFrequency="50" IsSnapToTickEnabled="True" />
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
         </TabControl>
-
-        <Grid Grid.Row="2" Margin="24,10,28,18">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0"
-                       Margin="0,0,12,0"
-                       VerticalAlignment="Center"
-                       Style="{StaticResource SecondaryText}"
-                       Text="{Binding ConfigPathText}"
-                       TextTrimming="CharacterEllipsis" />
-            <Button Grid.Column="1"
-                    Width="104"
-                    Click="Close_Click"
-                    Content="{Binding Text[SettingsClose]}" />
-        </Grid>
     </Grid>
 </Window>

@@ -2,8 +2,11 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.4.1 - 2026-05-14
 
+- Connected the remaining settings UI placeholders: app display name editing, functional settings search, and live minimize-animation control.
+- Fixed native Windows taskbar restoration when the last dock window is closed while taskbar hiding is enabled.
+- Reworked the settings window to more closely match Windows 11 Settings, including custom dark window chrome, sidebar navigation, row cards, toggle switches, slim scrollbars, and accent sliders.
 - Renamed the internal solution, project folders, project files, and namespaces from `Dock.*` to `RockETDock.*`.
 - Moved local RocketDock reference material under the ignored `RocketDock/` folder.
 - Fixed the background opacity slider so its minimum value makes the dock shell fully invisible, including border and shadow.

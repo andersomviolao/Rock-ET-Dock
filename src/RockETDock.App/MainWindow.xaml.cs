@@ -74,7 +74,7 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
-        Title = $"{UserPaths.AppName} - {bar.Name}";
+        Title = $"{GetAppDisplayName()} - {bar.Name}";
         DataContext = _viewModel;
         DockShell.ContextMenu = BuildContextMenu();
 
@@ -2158,7 +2158,7 @@ public partial class MainWindow : Window
     private void ApplyBarSettings()
     {
         ResetHoverZoom(immediate: true);
-        Title = $"{UserPaths.AppName} - {_bar.Name}";
+        Title = $"{GetAppDisplayName()} - {_bar.Name}";
         Topmost = _bar.Layering == DockLayering.TopMost;
         DockShell.AllowDrop = !_bar.LockItems;
         DockShell.ContextMenu = BuildContextMenu();
@@ -2791,6 +2791,13 @@ public partial class MainWindow : Window
         }
 
         return value < minimum ? minimum : value > maximum ? maximum : value;
+    }
+
+    private string GetAppDisplayName()
+    {
+        return string.IsNullOrWhiteSpace(_store.Current.App.DisplayName)
+            ? UserPaths.AppName
+            : _store.Current.App.DisplayName.Trim();
     }
 
     private static void TraceDrag(string message)

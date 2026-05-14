@@ -19,9 +19,14 @@ public partial class App : System.Windows.Application
     private DockConfigurationStore? _store;
     private readonly List<MainWindow> _windows = [];
     private readonly NativeTaskbarController _nativeTaskbar = new();
+    private readonly WindowAnimationController _windowAnimations = new();
     private WindowMinimizeMonitor? _windowMonitor;
     private CancellationTokenSource? _settingsPipeCancellation;
     private bool _settingsOnlyMode;
+    private bool _shutdownRequested;
+    private bool _nativeTaskbarWasHiddenThisSession;
+    private bool _nativeTaskbarRestoredForShutdown;
+    private bool _windowAnimationsRestoredForShutdown;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -29,6 +34,7 @@ public partial class App : System.Windows.Application
 
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         System.Threading.Tasks.TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 
         _store = new DockConfigurationStore();
@@ -108,17 +114,12 @@ public partial class App : System.Windows.Application
         _store.Save();
         _windows.Remove(window);
         window.Close();
-
-        if (_windows.Count == 0)
-        {
-            Shutdown();
-        }
     }
 
     internal void ExitAll()
     {
         SaveConfiguration();
-        Shutdown();
+        ShutdownApplication();
     }
 
     internal void RefreshGlobalServices()
@@ -128,7 +129,10 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        _nativeTaskbar.Apply(_store.Current.App.HideNativeTaskbar);
+        var hideNativeTaskbar = _store.Current.App.HideNativeTaskbar;
+        _nativeTaskbar.Apply(hideNativeTaskbar);
+        _nativeTaskbarWasHiddenThisSession |= hideNativeTaskbar;
+        _windowAnimations.Apply(_store.Current.App.DisableMinimizeAnimations);
 
         if (_store.Current.App.MinimizeWindowsToDock)
         {
@@ -177,11 +181,20 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        RestoreNativeTaskbarForShutdown();
+        RestoreWindowAnimationsForShutdown();
+        AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
         _settingsPipeCancellation?.Cancel();
         _settingsPipeCancellation?.Dispose();
         _windowMonitor?.Dispose();
-        _nativeTaskbar.Restore();
         base.OnExit(e);
+    }
+
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        RestoreNativeTaskbarForShutdown();
+        RestoreWindowAnimationsForShutdown();
+        base.OnSessionEnding(e);
     }
 
     private static void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -204,6 +217,12 @@ public partial class App : System.Windows.Application
         e.SetObserved();
     }
 
+    private void CurrentDomain_ProcessExit(object? sender, EventArgs e)
+    {
+        RestoreNativeTaskbarForShutdown();
+        RestoreWindowAnimationsForShutdown();
+    }
+
     private void ShowBar(DockBarSettings bar)
     {
         if (_store is null)
@@ -214,9 +233,79 @@ public partial class App : System.Windows.Application
         UserPaths.EnsureBarFolder(bar.Name);
 
         var window = new MainWindow(_store, bar);
-        window.Closed += (_, _) => _windows.Remove(window);
+        window.Closed += HandleBarClosed;
         _windows.Add(window);
         window.Show();
+    }
+
+    private void HandleBarClosed(object? sender, EventArgs e)
+    {
+        if (sender is MainWindow window)
+        {
+            _windows.Remove(window);
+        }
+
+        if (!_settingsOnlyMode && _windows.Count == 0)
+        {
+            ShutdownApplication();
+        }
+    }
+
+    private void ShutdownApplication()
+    {
+        if (_shutdownRequested)
+        {
+            return;
+        }
+
+        _shutdownRequested = true;
+        RestoreNativeTaskbarForShutdown();
+        RestoreWindowAnimationsForShutdown();
+        Shutdown();
+    }
+
+    private void RestoreNativeTaskbarForShutdown()
+    {
+        if (_nativeTaskbarRestoredForShutdown)
+        {
+            return;
+        }
+
+        _nativeTaskbarRestoredForShutdown = true;
+
+        try
+        {
+            if (_nativeTaskbarWasHiddenThisSession)
+            {
+                _nativeTaskbar.ForceRestore();
+                return;
+            }
+
+            _nativeTaskbar.Restore();
+        }
+        catch (Exception ex)
+        {
+            RuntimeLog.Write(ex, "RestoreNativeTaskbarForShutdown");
+        }
+    }
+
+    private void RestoreWindowAnimationsForShutdown()
+    {
+        if (_windowAnimationsRestoredForShutdown)
+        {
+            return;
+        }
+
+        _windowAnimationsRestoredForShutdown = true;
+
+        try
+        {
+            _windowAnimations.Restore();
+        }
+        catch (Exception ex)
+        {
+            RuntimeLog.Write(ex, "RestoreWindowAnimationsForShutdown");
+        }
     }
 
     private void ShowSettingsOnly(DockConfiguration configuration)

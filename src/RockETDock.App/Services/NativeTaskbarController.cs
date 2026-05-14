@@ -34,6 +34,11 @@ public sealed class NativeTaskbarController
             return;
         }
 
+        ForceRestore();
+    }
+
+    public void ForceRestore()
+    {
         SetTaskbarsVisible(visible: true);
         _hiddenByRockEtDock = false;
     }
