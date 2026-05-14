@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Pipes;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Dock.App.Models;
@@ -10,10 +14,14 @@ namespace Dock.App;
 
 public partial class App : System.Windows.Application
 {
+    private const string SettingsPipeName = "RockETDock.Settings";
+
     private DockConfigurationStore? _store;
     private readonly List<MainWindow> _windows = [];
     private readonly NativeTaskbarController _nativeTaskbar = new();
     private WindowMinimizeMonitor? _windowMonitor;
+    private CancellationTokenSource? _settingsPipeCancellation;
+    private bool _settingsOnlyMode;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -26,15 +34,34 @@ public partial class App : System.Windows.Application
         _store = new DockConfigurationStore();
         var configuration = _store.Load();
 
+        _settingsOnlyMode = ShouldOpenSettingsOnly(e.Args);
+        if (_settingsOnlyMode && TryRequestSettingsFromRunningApp())
+        {
+            Shutdown();
+            return;
+        }
+
+        if (_settingsOnlyMode)
+        {
+            ShowSettingsOnly(configuration);
+            return;
+        }
+
         foreach (var bar in configuration.Bars)
         {
             ShowBar(bar);
         }
 
+        StartSettingsPipeServer();
         RefreshGlobalServices();
     }
 
     internal void CreateBar(DockEdge edge)
+    {
+        CreateBar(edge, showWindow: !_settingsOnlyMode);
+    }
+
+    internal void CreateBar(DockEdge edge, bool showWindow)
     {
         if (_store is null)
         {
@@ -55,7 +82,10 @@ public partial class App : System.Windows.Application
         var bar = DockBarSettings.Create(GetUniqueBarName(configuration, baseName), edge);
         configuration.Bars.Add(bar);
         _store.Save();
-        ShowBar(bar);
+        if (showWindow)
+        {
+            ShowBar(bar);
+        }
     }
 
     internal void SaveConfiguration()
@@ -147,6 +177,8 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _settingsPipeCancellation?.Cancel();
+        _settingsPipeCancellation?.Dispose();
         _windowMonitor?.Dispose();
         _nativeTaskbar.Restore();
         base.OnExit(e);
@@ -185,6 +217,120 @@ public partial class App : System.Windows.Application
         window.Closed += (_, _) => _windows.Remove(window);
         _windows.Add(window);
         window.Show();
+    }
+
+    private void ShowSettingsOnly(DockConfiguration configuration)
+    {
+        if (_store is null)
+        {
+            Shutdown();
+            return;
+        }
+
+        var bar = configuration.Bars.FirstOrDefault();
+        if (bar is null)
+        {
+            Shutdown();
+            return;
+        }
+
+        var settingsWindow = new SettingsWindow(_store, bar)
+        {
+            ShowInTaskbar = true,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen
+        };
+        settingsWindow.CreateBarRequested += (_, edge) => CreateBar(edge, showWindow: false);
+        settingsWindow.Closed += (_, _) => Shutdown();
+        settingsWindow.Show();
+        settingsWindow.Activate();
+    }
+
+    private void StartSettingsPipeServer()
+    {
+        _settingsPipeCancellation = new CancellationTokenSource();
+        _ = Task.Run(() => RunSettingsPipeServerAsync(_settingsPipeCancellation.Token));
+    }
+
+    private async Task RunSettingsPipeServerAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                using var server = new NamedPipeServerStream(
+                    SettingsPipeName,
+                    PipeDirection.InOut,
+                    1,
+                    PipeTransmissionMode.Byte,
+                    PipeOptions.Asynchronous);
+                await server.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
+
+                using var reader = new StreamReader(server);
+                using var writer = new StreamWriter(server) { AutoFlush = true };
+                var command = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                if (string.Equals(command, "open-settings", StringComparison.OrdinalIgnoreCase))
+                {
+                    await Dispatcher.InvokeAsync(OpenSettingsFromExternalRequest);
+                    await writer.WriteLineAsync("ok").ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                RuntimeLog.Write(ex, "RunSettingsPipeServerAsync");
+            }
+        }
+    }
+
+    private static bool TryRequestSettingsFromRunningApp()
+    {
+        try
+        {
+            using var client = new NamedPipeClientStream(".", SettingsPipeName, PipeDirection.InOut, PipeOptions.None);
+            client.Connect(300);
+            using var reader = new StreamReader(client);
+            using var writer = new StreamWriter(client) { AutoFlush = true };
+            writer.WriteLine("open-settings");
+            return string.Equals(reader.ReadLine(), "ok", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void OpenSettingsFromExternalRequest()
+    {
+        var window = _windows.FirstOrDefault();
+        if (window is not null)
+        {
+            window.OpenSettings();
+            return;
+        }
+
+        if (_store is not null)
+        {
+            ShowSettingsOnly(_store.Current);
+        }
+    }
+
+    private static bool ShouldOpenSettingsOnly(string[] args)
+    {
+        if (args.Any(static arg =>
+                arg.Equals("--settings", StringComparison.OrdinalIgnoreCase) ||
+                arg.Equals("/settings", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        var processPath = Environment.ProcessPath;
+        var executableName = string.IsNullOrWhiteSpace(processPath)
+            ? ""
+            : Path.GetFileNameWithoutExtension(processPath);
+        return executableName.Contains("Settings", StringComparison.OrdinalIgnoreCase);
     }
 
     private void AddMinimizedWindow(DockItem item)

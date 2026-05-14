@@ -85,11 +85,16 @@ public sealed class LocalizedText
     private static readonly IReadOnlyDictionary<string, string> EnglishValues = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["SettingsWindowTitle"] = "Rock ET Dock - Settings",
+        ["SettingsSearchPlaceholder"] = "Find a setting",
         ["SettingsGeneralTab"] = "General",
         ["SettingsIconsTab"] = "Icons",
         ["SettingsPositionTab"] = "Position",
         ["SettingsStyleTab"] = "Style",
         ["SettingsBehaviorTab"] = "Behavior",
+        ["SettingsCurrentDockTitle"] = "Current dock",
+        ["SettingsCreateDockTitle"] = "Create a new dock",
+        ["SettingsCreateDockSubtitle"] = "Choose a screen edge and Rock ET Dock will create another bar with the same system-level behavior.",
+        ["SettingsDragSectionTitle"] = "Drag and auto-hide",
         ["SettingsBarName"] = "Dock name",
         ["SettingsLanguage"] = "Language",
         ["SettingsRunAtStartup"] = "Start with Windows",
@@ -196,11 +201,16 @@ public sealed class LocalizedText
     private static readonly IReadOnlyDictionary<string, string> PortugueseBrazilianValues = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["SettingsWindowTitle"] = "Rock ET Dock - Configurações",
+        ["SettingsSearchPlaceholder"] = "Localizar uma configuração",
         ["SettingsGeneralTab"] = "Geral",
         ["SettingsIconsTab"] = "Ícones",
         ["SettingsPositionTab"] = "Posição",
         ["SettingsStyleTab"] = "Estilo",
         ["SettingsBehaviorTab"] = "Comportamento",
+        ["SettingsCurrentDockTitle"] = "Barra atual",
+        ["SettingsCreateDockTitle"] = "Criar uma nova barra",
+        ["SettingsCreateDockSubtitle"] = "Escolha um canto da tela e o Rock ET Dock cria outra barra com o mesmo comportamento integrado ao sistema.",
+        ["SettingsDragSectionTitle"] = "Arrastar e auto-ocultar",
         ["SettingsBarName"] = "Nome da barra",
         ["SettingsLanguage"] = "Idioma",
         ["SettingsRunAtStartup"] = "Iniciar com o Windows",

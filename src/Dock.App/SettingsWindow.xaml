@@ -3,334 +3,528 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Dock.App.Controls"
         Title="{Binding Text[SettingsWindowTitle]}"
-        Width="680"
-        Height="560"
-        MinWidth="620"
-        MinHeight="500"
+        Width="1040"
+        Height="720"
+        MinWidth="900"
+        MinHeight="600"
         Icon="Assets/rock-et-dock-icon.ico"
+        Background="{DynamicResource SettingsBackgroundBrush}"
+        Foreground="{DynamicResource SettingsTextBrush}"
         WindowStartupLocation="CenterOwner">
-    <Grid Margin="18">
+    <Window.Resources>
+        <SolidColorBrush x:Key="SettingsBackgroundBrush" Color="#F3F3F3" />
+        <SolidColorBrush x:Key="SettingsSidebarBrush" Color="#F3F3F3" />
+        <SolidColorBrush x:Key="SettingsCardBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="SettingsCardHoverBrush" Color="#FAFAFA" />
+        <SolidColorBrush x:Key="SettingsTextBrush" Color="#1C1C1C" />
+        <SolidColorBrush x:Key="SettingsSecondaryTextBrush" Color="#5B5B5B" />
+        <SolidColorBrush x:Key="SettingsBorderBrush" Color="#E0E0E0" />
+        <SolidColorBrush x:Key="SettingsSelectedNavBrush" Color="#E6E6E6" />
+        <SolidColorBrush x:Key="SettingsInputBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="SettingsButtonBrush" Color="#F7F7F7" />
+        <SolidColorBrush x:Key="SettingsAccentBrush" Color="#0078D4" />
+
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style TargetType="{x:Type CheckBox}">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="Margin" Value="0,8,0,8" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SettingsInputBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type ComboBox}">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SettingsInputBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+        </Style>
+
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="MinWidth" Value="96" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SettingsButtonBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="ButtonChrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonChrome" Property="Background" Value="{DynamicResource SettingsCardHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonChrome" Property="Opacity" Value="0.82" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonChrome" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PageTitleText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,22" />
+        </Style>
+
+        <Style x:Key="SectionTitleText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style x:Key="SecondaryText" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsSecondaryTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="SettingsCard" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="{DynamicResource SettingsCardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+
+        <Style x:Key="SettingLabel" TargetType="{x:Type TextBlock}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="0,0,18,0" />
+        </Style>
+
+        <Style x:Key="NavTabItem" TargetType="{x:Type TabItem}">
+            <Setter Property="Width" Value="260" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="Margin" Value="20,2,16,2" />
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="NavItem"
+                                Background="Transparent"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="AccentRail"
+                                        Width="3"
+                                        Height="18"
+                                        Background="{DynamicResource SettingsAccentBrush}"
+                                        CornerRadius="2"
+                                        Visibility="Collapsed" />
+                                <ContentPresenter Grid.Column="1"
+                                                  Margin="10,0,0,0"
+                                                  VerticalAlignment="Center"
+                                                  ContentSource="Header"
+                                                  RecognizesAccessKey="True" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="NavItem" Property="Background" Value="{DynamicResource SettingsSelectedNavBrush}" />
+                                <Setter TargetName="AccentRail" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="NavItem" Property="Background" Value="{DynamicResource SettingsCardHoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type TabControl}">
+            <Setter Property="Background" Value="{DynamicResource SettingsBackgroundBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{DynamicResource SettingsBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="74" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <DockPanel Margin="0,0,0,14">
-            <controls:BrandLogo Width="56"
-                                Height="56"
-                                DockPanel.Dock="Left"
-                                Margin="0,0,12,0" />
-            <StackPanel VerticalAlignment="Center">
-                <TextBlock FontSize="22"
+        <Grid Grid.Row="0" Margin="24,16,28,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock FontSize="18"
+                           Margin="0,0,12,0"
+                           Text="&lt;" />
+                <TextBlock FontSize="13"
                            FontWeight="SemiBold"
-                           Text="Rock ET Dock" />
-                <TextBlock Foreground="#666"
-                           Text="{Binding BarNameText}" />
+                           VerticalAlignment="Center"
+                           Text="{Binding Text[SettingsWindowTitle]}" />
             </StackPanel>
-        </DockPanel>
 
-        <TabControl Grid.Row="1">
+            <Border Grid.Column="1"
+                    Width="520"
+                    Height="34"
+                    HorizontalAlignment="Left"
+                    Background="{DynamicResource SettingsInputBrush}"
+                    BorderBrush="{DynamicResource SettingsBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="17">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="14,0">
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="13"
+                               Margin="0,0,10,0"
+                               Text="&#xE721;" />
+                    <TextBlock Foreground="{DynamicResource SettingsSecondaryTextBrush}"
+                               VerticalAlignment="Center"
+                               Text="{Binding Text[SettingsSearchPlaceholder]}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TabControl Grid.Row="1"
+                    TabStripPlacement="Left"
+                    SelectedIndex="0">
+            <TabControl.Resources>
+                <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource NavTabItem}" />
+            </TabControl.Resources>
+
             <TabItem Header="{Binding Text[SettingsGeneralTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="14">
-                        <TextBlock Text="{Binding Text[SettingsBarName]}" />
-                        <TextBox x:Name="BarNameBox" Margin="0,4,0,12" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
+                    <StackPanel MaxWidth="920">
+                        <DockPanel Margin="0,0,0,22">
+                            <controls:BrandLogo Width="72"
+                                                Height="72"
+                                                DockPanel.Dock="Left"
+                                                Margin="0,0,18,0" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource PageTitleText}"
+                                           Margin="0,0,0,4"
+                                           Text="Rock ET Dock" />
+                                <TextBlock Style="{StaticResource SecondaryText}"
+                                           Text="{Binding BarNameText}" />
+                            </StackPanel>
+                        </DockPanel>
 
-                        <TextBlock Text="{Binding Text[SettingsLanguage]}" />
-                        <ComboBox x:Name="LanguageBox"
-                                  DisplayMemberPath="Label"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
+                        <TextBlock Style="{StaticResource SectionTitleText}"
+                                   Text="{Binding Text[SettingsCurrentDockTitle]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsBarName]}" />
+                                    <TextBox x:Name="BarNameBox" Grid.Column="1" />
+                                </Grid>
 
-                        <CheckBox x:Name="RunAtStartupBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsRunAtStartup]}" />
-                        <CheckBox x:Name="LockItemsBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsLockItems]}" />
-                        <CheckBox x:Name="AutoHideBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsAutoHide]}" />
-                        <CheckBox x:Name="WindowsButtonBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsWindowsButton]}" />
-                        <CheckBox x:Name="RecycleBinBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsRecycleBin]}" />
-                        <CheckBox x:Name="HideNativeTaskbarBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsHideNativeTaskbar]}" />
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsLanguage]}" />
+                                    <ComboBox x:Name="LanguageBox"
+                                              Grid.Column="1"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" />
+                                </Grid>
 
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="{Binding Text[SettingsMoveModifierKey]}"
-                                   TextWrapping="Wrap" />
-                        <ComboBox x:Name="MoveModifierBox"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
+                                <CheckBox x:Name="RunAtStartupBox" Content="{Binding Text[SettingsRunAtStartup]}" />
+                                <CheckBox x:Name="LockItemsBox" Content="{Binding Text[SettingsLockItems]}" />
+                                <CheckBox x:Name="AutoHideBox" Content="{Binding Text[SettingsAutoHide]}" />
+                                <CheckBox x:Name="WindowsButtonBox" Content="{Binding Text[SettingsWindowsButton]}" />
+                                <CheckBox x:Name="RecycleBinBox" Content="{Binding Text[SettingsRecycleBin]}" />
+                                <CheckBox x:Name="HideNativeTaskbarBox" Content="{Binding Text[SettingsHideNativeTaskbar]}" />
+                            </StackPanel>
+                        </Border>
 
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="{Binding Text[SettingsGifModifierKey]}"
-                                   TextWrapping="Wrap" />
-                        <ComboBox x:Name="GifModifierBox"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
+                        <TextBlock Style="{StaticResource SectionTitleText}"
+                                   Text="{Binding Text[SettingsCreateDockTitle]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SecondaryText}"
+                                           Margin="0,0,0,14"
+                                           Text="{Binding Text[SettingsCreateDockSubtitle]}" />
+                                <WrapPanel>
+                                    <Button Margin="0,0,8,8"
+                                            Click="CreateLeftDock_Click"
+                                            Content="{Binding Text[EnumDockEdgeLeft]}" />
+                                    <Button Margin="0,0,8,8"
+                                            Click="CreateRightDock_Click"
+                                            Content="{Binding Text[EnumDockEdgeRight]}" />
+                                    <Button Margin="0,0,8,8"
+                                            Click="CreateTopDock_Click"
+                                            Content="{Binding Text[EnumDockEdgeTop]}" />
+                                    <Button Margin="0,0,8,8"
+                                            Click="CreateBottomDock_Click"
+                                            Content="{Binding Text[EnumDockEdgeBottom]}" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
 
-                        <TextBlock Margin="0,10,0,0" Text="{Binding Text[SettingsAutoHideDelay]}" />
-                        <Slider x:Name="AutoHideDelaySlider"
-                                Minimum="0"
-                                Maximum="2000"
-                                TickFrequency="50"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsAutoHideDuration]}" />
-                        <Slider x:Name="AutoHideDurationSlider"
-                                Minimum="0"
-                                Maximum="800"
-                                TickFrequency="20"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,8" />
-
-                        <TextBlock Margin="0,12,0,0" Text="{Binding Text[SettingsBarFolder]}" />
-                        <TextBox x:Name="BarFolderBox"
-                                 Margin="0,4,0,0"
-                                 IsReadOnly="True" />
+                        <TextBlock Style="{StaticResource SectionTitleText}"
+                                   Text="{Binding Text[SettingsDragSectionTitle]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsMoveModifierKey]}" />
+                                    <ComboBox x:Name="MoveModifierBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsGifModifierKey]}" />
+                                    <ComboBox x:Name="GifModifierBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <TextBlock Margin="0,6,0,4" Text="{Binding Text[SettingsAutoHideDelay]}" />
+                                <Slider x:Name="AutoHideDelaySlider"
+                                        Minimum="0"
+                                        Maximum="2000"
+                                        TickFrequency="50"
+                                        IsSnapToTickEnabled="True"
+                                        Margin="0,0,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsAutoHideDuration]}" />
+                                <Slider x:Name="AutoHideDurationSlider"
+                                        Minimum="0"
+                                        Maximum="800"
+                                        TickFrequency="20"
+                                        IsSnapToTickEnabled="True"
+                                        Margin="0,0,0,12" />
+                                <TextBlock Margin="0,6,0,4" Text="{Binding Text[SettingsBarFolder]}" />
+                                <TextBox x:Name="BarFolderBox" IsReadOnly="True" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="{Binding Text[SettingsIconsTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="14">
-                        <TextBlock Text="{Binding Text[SettingsIconSize]}" />
-                        <Slider x:Name="IconSizeSlider"
-                                Minimum="12"
-                                Maximum="96"
-                                TickFrequency="2"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
+                    <StackPanel MaxWidth="920">
+                        <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsIconsTab]}" />
 
-                        <TextBlock Text="{Binding Text[SettingsIconOpacity]}" />
-                        <Slider x:Name="IconOpacitySlider"
-                                Minimum="15"
-                                Maximum="100"
-                                TickFrequency="5"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <CheckBox x:Name="HideLabelsBox"
-                                  Margin="0,0,0,12"
-                                  Content="{Binding Text[SettingsHideLabels]}" />
-
-                        <TextBlock Text="{Binding Text[SettingsIconSpacing]}" />
-                        <Slider x:Name="IconSpacingSlider"
-                                Minimum="0"
-                                Maximum="40"
-                                TickFrequency="2"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsIconBottomMargin]}" />
-                        <Slider x:Name="IconBottomMarginSlider"
-                                Minimum="0"
-                                Maximum="60"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsIconQuality]}" />
-                        <ComboBox x:Name="IconQualityBox"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
-
-                        <CheckBox x:Name="ZoomEnabledBox"
-                                  Margin="0,0,0,8"
-                                  Content="{Binding Text[SettingsZoomEnabled]}" />
-                        <CheckBox x:Name="ZoomOpaqueBox"
-                                  Margin="0,0,0,12"
-                                  Content="{Binding Text[SettingsZoomOpaque]}" />
-
-                        <TextBlock Text="{Binding Text[SettingsZoomSize]}" />
-                        <Slider x:Name="ZoomSizeSlider"
-                                Minimum="16"
-                                Maximum="128"
-                                TickFrequency="2"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsZoomRange]}" />
-                        <Slider x:Name="ZoomRangeSlider"
-                                Minimum="1"
-                                Maximum="10"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsZoomDuration]}" />
-                        <Slider x:Name="ZoomDurationSlider"
-                                Minimum="60"
-                                Maximum="500"
-                                TickFrequency="20"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsHoverEffect]}" />
-                        <ComboBox x:Name="HoverEffectBox"
-                                  Margin="0,4,0,0"
-                                  SelectedValuePath="Value" />
-
-                        <Button Margin="0,16,0,0"
-                                HorizontalAlignment="Left"
-                                Padding="14,6"
-                                Click="AddGif_Click"
-                                Content="{Binding Text[SettingsAddAnimatedGif]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Text[SettingsIconSize]}" />
+                                <Slider x:Name="IconSizeSlider" Minimum="12" Maximum="96" TickFrequency="2" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsIconOpacity]}" />
+                                <Slider x:Name="IconOpacitySlider" Minimum="15" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <CheckBox x:Name="HideLabelsBox" Content="{Binding Text[SettingsHideLabels]}" />
+                                <TextBlock Text="{Binding Text[SettingsIconSpacing]}" />
+                                <Slider x:Name="IconSpacingSlider" Minimum="0" Maximum="40" TickFrequency="2" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsIconBottomMargin]}" />
+                                <Slider x:Name="IconBottomMarginSlider" Minimum="0" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsIconQuality]}" />
+                                    <ComboBox x:Name="IconQualityBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <CheckBox x:Name="ZoomEnabledBox" Content="{Binding Text[SettingsZoomEnabled]}" />
+                                <CheckBox x:Name="ZoomOpaqueBox" Content="{Binding Text[SettingsZoomOpaque]}" />
+                                <TextBlock Text="{Binding Text[SettingsZoomSize]}" />
+                                <Slider x:Name="ZoomSizeSlider" Minimum="16" Maximum="128" TickFrequency="2" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsZoomRange]}" />
+                                <Slider x:Name="ZoomRangeSlider" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsZoomDuration]}" />
+                                <Slider x:Name="ZoomDurationSlider" Minimum="60" Maximum="500" TickFrequency="20" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsHoverEffect]}" />
+                                    <ComboBox x:Name="HoverEffectBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <Button HorizontalAlignment="Left"
+                                        Click="AddGif_Click"
+                                        Content="{Binding Text[SettingsAddAnimatedGif]}" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="{Binding Text[SettingsPositionTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="14">
-                        <TextBlock Text="{Binding Text[SettingsMonitor]}" />
-                        <ComboBox x:Name="MonitorBox"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
-
-                        <TextBlock Text="{Binding Text[SettingsEdge]}" />
-                        <ComboBox x:Name="EdgeBox"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
-
-                        <TextBlock Text="{Binding Text[SettingsLayering]}" />
-                        <ComboBox x:Name="LayeringBox"
-                                  Margin="0,4,0,12"
-                                  SelectedValuePath="Value" />
-
-                        <TextBlock Text="{Binding Text[SettingsBarWidth]}" />
-                        <Slider x:Name="BarWidthSlider"
-                                Minimum="0"
-                                Maximum="1800"
-                                TickFrequency="20"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsBarHeight]}" />
-                        <Slider x:Name="BarHeightSlider"
-                                Minimum="0"
-                                Maximum="320"
-                                TickFrequency="4"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsOffset]}" />
-                        <Slider x:Name="OffsetSlider"
-                                Minimum="-220"
-                                Maximum="200"
-                                TickFrequency="5"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsCenterOffset]}" />
-                        <Slider x:Name="CenterOffsetSlider"
-                                Minimum="-800"
-                                Maximum="800"
-                                TickFrequency="10"
-                                TickPlacement="BottomRight"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,2" />
-                        <TextBlock HorizontalAlignment="Center"
-                                   Foreground="#777"
-                                   FontSize="11"
-                                   Text="{Binding Text[SettingsCenterHint]}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
+                    <StackPanel MaxWidth="920">
+                        <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsPositionTab]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsMonitor]}" />
+                                    <ComboBox x:Name="MonitorBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsEdge]}" />
+                                    <ComboBox x:Name="EdgeBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsLayering]}" />
+                                    <ComboBox x:Name="LayeringBox" Grid.Column="1" SelectedValuePath="Value" />
+                                </Grid>
+                                <TextBlock Text="{Binding Text[SettingsBarWidth]}" />
+                                <Slider x:Name="BarWidthSlider" Minimum="0" Maximum="1800" TickFrequency="20" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsBarHeight]}" />
+                                <Slider x:Name="BarHeightSlider" Minimum="0" Maximum="320" TickFrequency="4" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsOffset]}" />
+                                <Slider x:Name="OffsetSlider" Minimum="-220" Maximum="200" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsCenterOffset]}" />
+                                <Slider x:Name="CenterOffsetSlider" Minimum="-800" Maximum="800" TickFrequency="10" TickPlacement="BottomRight" IsSnapToTickEnabled="True" Margin="0,4,0,2" />
+                                <TextBlock HorizontalAlignment="Center"
+                                           Style="{StaticResource SecondaryText}"
+                                           Text="{Binding Text[SettingsCenterHint]}" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="{Binding Text[SettingsStyleTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="14">
-                        <TextBlock Text="{Binding Text[SettingsTheme]}" />
-                        <ComboBox x:Name="ThemeBox" Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsBackgroundOpacity]}" />
-                        <Slider x:Name="BackgroundOpacitySlider"
-                                Minimum="15"
-                                Maximum="100"
-                                TickFrequency="5"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsShellCornerRadius]}" />
-                        <Slider x:Name="ShellCornerRadiusSlider"
-                                Minimum="0"
-                                Maximum="36"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsTileCornerRadius]}" />
-                        <Slider x:Name="TileCornerRadiusSlider"
-                                Minimum="0"
-                                Maximum="24"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsFontFamily]}" />
-                        <TextBox x:Name="FontFamilyBox" Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsFontSize]}" />
-                        <Slider x:Name="FontSizeSlider"
-                                Minimum="7"
-                                Maximum="16"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,12" />
-
-                        <TextBlock Text="{Binding Text[SettingsLabelColor]}" />
-                        <TextBox x:Name="LabelColorBox" Margin="0,4,0,0" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
+                    <StackPanel MaxWidth="920">
+                        <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsStyleTab]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsTheme]}" />
+                                    <ComboBox x:Name="ThemeBox" Grid.Column="1" />
+                                </Grid>
+                                <TextBlock Text="{Binding Text[SettingsBackgroundOpacity]}" />
+                                <Slider x:Name="BackgroundOpacitySlider" Minimum="15" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsShellCornerRadius]}" />
+                                <Slider x:Name="ShellCornerRadiusSlider" Minimum="0" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <TextBlock Text="{Binding Text[SettingsTileCornerRadius]}" />
+                                <Slider x:Name="TileCornerRadiusSlider" Minimum="0" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsFontFamily]}" />
+                                    <TextBox x:Name="FontFamilyBox" Grid.Column="1" />
+                                </Grid>
+                                <TextBlock Text="{Binding Text[SettingsFontSize]}" />
+                                <Slider x:Name="FontSizeSlider" Minimum="7" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SettingLabel}" Text="{Binding Text[SettingsLabelColor]}" />
+                                    <TextBox x:Name="LabelColorBox" Grid.Column="1" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="{Binding Text[SettingsBehaviorTab]}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="14">
-                        <CheckBox x:Name="MinimizeWindowsBox"
-                                  Margin="0,0,0,8"
-                                  ToolTip="{Binding Text[SettingsMinimizeWindowsTooltip]}"
-                                  Content="{Binding Text[SettingsMinimizeWindows]}" />
-                        <CheckBox x:Name="DisableMinimizeAnimationsBox"
-                                  Margin="0,0,0,8"
-                                  IsEnabled="False"
-                                  ToolTip="{Binding Text[SettingsDisableMinimizeAnimationsTooltip]}"
-                                  Content="{Binding Text[SettingsDisableMinimizeAnimations]}" />
-                        <CheckBox x:Name="ShowRunningIndicatorsBox"
-                                  Margin="0,0,0,8"
-                                  ToolTip="{Binding Text[SettingsShowRunningIndicatorsTooltip]}"
-                                  Content="{Binding Text[SettingsShowRunningIndicators]}" />
-                        <CheckBox x:Name="OpenRunningInstancesBox"
-                                  Margin="0,0,0,8"
-                                  ToolTip="{Binding Text[SettingsOpenRunningInstancesTooltip]}"
-                                  Content="{Binding Text[SettingsOpenRunningInstances]}" />
-                        <CheckBox x:Name="PopupOnMouseoverBox"
-                                  Margin="0,0,0,12"
-                                  Content="{Binding Text[SettingsPopupOnMouseover]}" />
-
-                        <TextBlock Text="{Binding Text[SettingsPopupDelay]}" />
-                        <Slider x:Name="PopupDelaySlider"
-                                Minimum="0"
-                                Maximum="1500"
-                                TickFrequency="50"
-                                IsSnapToTickEnabled="True"
-                                Margin="0,4,0,0" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,0,38,18">
+                    <StackPanel MaxWidth="920">
+                        <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding Text[SettingsBehaviorTab]}" />
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <CheckBox x:Name="MinimizeWindowsBox"
+                                          ToolTip="{Binding Text[SettingsMinimizeWindowsTooltip]}"
+                                          Content="{Binding Text[SettingsMinimizeWindows]}" />
+                                <CheckBox x:Name="DisableMinimizeAnimationsBox"
+                                          IsEnabled="False"
+                                          ToolTip="{Binding Text[SettingsDisableMinimizeAnimationsTooltip]}"
+                                          Content="{Binding Text[SettingsDisableMinimizeAnimations]}" />
+                                <CheckBox x:Name="ShowRunningIndicatorsBox"
+                                          ToolTip="{Binding Text[SettingsShowRunningIndicatorsTooltip]}"
+                                          Content="{Binding Text[SettingsShowRunningIndicators]}" />
+                                <CheckBox x:Name="OpenRunningInstancesBox"
+                                          ToolTip="{Binding Text[SettingsOpenRunningInstancesTooltip]}"
+                                          Content="{Binding Text[SettingsOpenRunningInstances]}" />
+                                <CheckBox x:Name="PopupOnMouseoverBox"
+                                          Content="{Binding Text[SettingsPopupOnMouseover]}" />
+                                <TextBlock Margin="0,10,0,4" Text="{Binding Text[SettingsPopupDelay]}" />
+                                <Slider x:Name="PopupDelaySlider" Minimum="0" Maximum="1500" TickFrequency="50" IsSnapToTickEnabled="True" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
         </TabControl>
 
-        <Grid Grid.Row="2" Margin="0,14,0,0">
+        <Grid Grid.Row="2" Margin="24,10,28,18">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -338,15 +532,13 @@
             <TextBlock Grid.Column="0"
                        Margin="0,0,12,0"
                        VerticalAlignment="Center"
-                       Foreground="#666"
+                       Style="{StaticResource SecondaryText}"
                        Text="{Binding ConfigPathText}"
                        TextTrimming="CharacterEllipsis" />
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal">
-                <Button Width="92"
-                        Click="Close_Click"
-                        Content="{Binding Text[SettingsClose]}" />
-            </StackPanel>
+            <Button Grid.Column="1"
+                    Width="104"
+                    Click="Close_Click"
+                    Content="{Binding Text[SettingsClose]}" />
         </Grid>
     </Grid>
 </Window>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Dock.App.Models;
 using Dock.App.Services;
 using Dock.App.ViewModels;
@@ -20,6 +21,7 @@ public partial class SettingsWindow : Window
     private bool _isSavingValues;
 
     public event EventHandler? SettingsApplied;
+    public event EventHandler<DockEdge>? CreateBarRequested;
 
     public SettingsWindow(DockConfigurationStore store, DockBarSettings bar)
     {
@@ -28,6 +30,8 @@ public partial class SettingsWindow : Window
 
         DataContext = new SettingsWindowText(bar, CurrentText);
         InitializeComponent();
+        ApplySystemTheme();
+        SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
         _isLoadingValues = true;
         LoadValues();
         _isLoadingValues = false;
@@ -99,6 +103,26 @@ public partial class SettingsWindow : Window
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void CreateLeftDock_Click(object sender, RoutedEventArgs e)
+    {
+        CreateBarRequested?.Invoke(this, DockEdge.Left);
+    }
+
+    private void CreateRightDock_Click(object sender, RoutedEventArgs e)
+    {
+        CreateBarRequested?.Invoke(this, DockEdge.Right);
+    }
+
+    private void CreateTopDock_Click(object sender, RoutedEventArgs e)
+    {
+        CreateBarRequested?.Invoke(this, DockEdge.Top);
+    }
+
+    private void CreateBottomDock_Click(object sender, RoutedEventArgs e)
+    {
+        CreateBarRequested?.Invoke(this, DockEdge.Bottom);
     }
 
     private void AddGif_Click(object sender, RoutedEventArgs e)
@@ -436,6 +460,92 @@ public partial class SettingsWindow : Window
         }
 
         return items;
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+        base.OnClosed(e);
+    }
+
+    private void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category is UserPreferenceCategory.Color or UserPreferenceCategory.General or UserPreferenceCategory.VisualStyle)
+        {
+            Dispatcher.Invoke(ApplySystemTheme);
+        }
+    }
+
+    private void ApplySystemTheme()
+    {
+        if (IsWindowsLightTheme())
+        {
+            SetThemeBrushes(
+                background: Color.FromRgb(243, 243, 243),
+                sidebar: Color.FromRgb(243, 243, 243),
+                card: Color.FromRgb(255, 255, 255),
+                cardHover: Color.FromRgb(250, 250, 250),
+                text: Color.FromRgb(28, 28, 28),
+                secondaryText: Color.FromRgb(91, 91, 91),
+                border: Color.FromRgb(224, 224, 224),
+                selectedNav: Color.FromRgb(230, 230, 230),
+                input: Color.FromRgb(255, 255, 255),
+                button: Color.FromRgb(247, 247, 247),
+                accent: Color.FromRgb(0, 120, 212));
+            return;
+        }
+
+        SetThemeBrushes(
+            background: Color.FromRgb(31, 31, 31),
+            sidebar: Color.FromRgb(31, 31, 31),
+            card: Color.FromRgb(43, 43, 43),
+            cardHover: Color.FromRgb(51, 51, 51),
+            text: Color.FromRgb(245, 245, 245),
+            secondaryText: Color.FromRgb(194, 194, 194),
+            border: Color.FromRgb(61, 61, 61),
+            selectedNav: Color.FromRgb(49, 49, 49),
+            input: Color.FromRgb(43, 43, 43),
+            button: Color.FromRgb(55, 55, 55),
+            accent: Color.FromRgb(96, 205, 255));
+    }
+
+    private void SetThemeBrushes(
+        Color background,
+        Color sidebar,
+        Color card,
+        Color cardHover,
+        Color text,
+        Color secondaryText,
+        Color border,
+        Color selectedNav,
+        Color input,
+        Color button,
+        Color accent)
+    {
+        Resources["SettingsBackgroundBrush"] = new SolidColorBrush(background);
+        Resources["SettingsSidebarBrush"] = new SolidColorBrush(sidebar);
+        Resources["SettingsCardBrush"] = new SolidColorBrush(card);
+        Resources["SettingsCardHoverBrush"] = new SolidColorBrush(cardHover);
+        Resources["SettingsTextBrush"] = new SolidColorBrush(text);
+        Resources["SettingsSecondaryTextBrush"] = new SolidColorBrush(secondaryText);
+        Resources["SettingsBorderBrush"] = new SolidColorBrush(border);
+        Resources["SettingsSelectedNavBrush"] = new SolidColorBrush(selectedNav);
+        Resources["SettingsInputBrush"] = new SolidColorBrush(input);
+        Resources["SettingsButtonBrush"] = new SolidColorBrush(button);
+        Resources["SettingsAccentBrush"] = new SolidColorBrush(accent);
+    }
+
+    private static bool IsWindowsLightTheme()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return key?.GetValue("AppsUseLightTheme") is not int value || value != 0;
+        }
+        catch
+        {
+            return true;
+        }
     }
 
     public sealed record EnumItem<T>(T Value, string Label)

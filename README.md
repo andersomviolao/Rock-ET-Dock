@@ -38,8 +38,10 @@ No portable zip. No loose DLL hunt. Install it, launch it, tune it, move on.
 - Starts new docks with Windows, Windows Settings, File Explorer, Microsoft Edge, and Recycle Bin ready.
 - Supports files, folders, links, separators, animated GIFs, the native Recycle Bin, and temporary minimized-window items.
 - Opens the native Start menu with left-click on the Windows button and the native Win+X menu with right-click.
+- Shows native Windows shell context menus on dock items, so right-click behavior feels like Explorer.
 - Lets you place docks on the top, bottom, left, or right edge, with true vertical layout on the side edges.
 - Applies every setting immediately. There is no Apply button and no waiting room.
+- Ships a separate **Rock ET Dock Settings** launcher for configuration and new dock creation.
 - Hides the native Windows taskbar while Rock ET Dock is running, then restores it on exit.
 - Uses hover magnification that pushes neighboring icons aside instead of stacking them.
 - Supports English and Brazilian Portuguese from the settings window.
@@ -50,21 +52,21 @@ No portable zip. No loose DLL hunt. Install it, launch it, tune it, move on.
 1. Go to the [latest release](https://github.com/Discasa/Rock-ET-Dock/releases/latest).
 2. Download `Rock-ET-Dock-Setup-<version>-win-x64.exe`.
 3. Run the installer.
-4. Launch **Rock ET Dock**.
+4. Launch **Rock ET Dock**. Use the Start Menu shortcut **Rock ET Dock Settings** when you want to tune it.
 
 The installer is the intended distribution path. The app is self-contained, so the user does not need to install the .NET runtime separately.
 
 ## Tune The Dock
 
-Right-click the dock and open **Dock settings**.
+Open **Rock ET Dock Settings** from the Start Menu. In the repository build, `settings.bat` opens the same settings-only mode.
 
-- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, move modifier key, GIF modifier key, and managed dock folder.
+- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, new dock creation, move modifier key, GIF modifier key, and managed dock folder.
 - **Icons:** size, opacity, labels, spacing, bottom margin, quality, hover magnification, magnification range, and animated GIF items.
 - **Position:** monitor, screen edge, layering, width, height, edge distance, and center offset.
 - **Style:** themes, background opacity, dock radius, icon tile radius, font, font size, and label color.
 - **Behavior:** minimized-window items, running indicators, existing-instance activation, and mouseover popup.
 
-Settings are saved to disk and reflected in the live dock immediately.
+The settings window uses a Windows Settings-style layout and follows the system light/dark app theme. When the dock is already running, the settings launcher asks that live process to open settings, so changes still apply immediately.
 
 ## Data Contract
 
@@ -89,6 +91,7 @@ Requirements:
 ```powershell
 dotnet build Dock.slnx -v minimal
 dotnet run --project src\Dock.App\Dock.App.csproj
+.\settings.bat
 dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```

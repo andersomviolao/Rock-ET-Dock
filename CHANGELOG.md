@@ -2,8 +2,13 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.4.0 - 2026-05-13
 
+- Added native Windows shell context menus for dock items so right-click behavior matches Explorer.
+- Added a separate settings launcher mode, `settings.bat`, and packaged `Rock ET Dock Settings.exe` with a Start Menu shortcut.
+- Added named-pipe handoff so the settings launcher opens the live dock process settings window when Rock ET Dock is already running.
+- Redesigned settings to follow the Windows Settings visual model with a navigation rail, search-style header, cards, and system light/dark theme colors.
+- Added a settings area for creating new docks on the left, right, top, or bottom edge.
 - Fixed hover magnification clipping at the start and end of the dock by sizing the transparent hover overhang per axis.
 - Added `reset-config.bat` to reset the current user's dock configuration while preserving managed dock items.
 - Removed the dock item versions of Settings and Exit; those actions remain in the dock context menu.
@@ -15,6 +20,8 @@ All notable changes to this project are documented here.
 - Refined drag-out feedback so removing a shortcut fades and shrinks differently from moving a managed file out of the dock folder.
 - Fixed first-run Windows Settings and File Explorer items so they launch through Windows shell commands instead of being treated as ordinary running app executables.
 - Stabilized drag-in spacing so nearby items open symmetrically around the drop position without rapid back-and-forth layout jitter.
+- Smoothed internal item reordering by coalescing drag updates to the render loop and skipping layout work when the insertion slot has not changed.
+- Kept hover magnification active while reordering so the dock remains expanded and the drag preview preserves the zoom scale without square clipping.
 
 ## 0.3.0 - 2026-05-13
 

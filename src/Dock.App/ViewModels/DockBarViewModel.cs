@@ -247,7 +247,7 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool MoveItemToIndex(string draggedItemId, int insertionIndex)
+    public bool MoveItemToIndex(string draggedItemId, int insertionIndex, bool persist = true)
     {
         var source = Items.FirstOrDefault(item => item.Item.Id == draggedItemId);
         if (source is null)
@@ -268,7 +268,11 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         }
 
         Items.Move(oldIndex, newIndex);
-        PersistVisualOrder();
+        if (persist)
+        {
+            PersistVisualOrder();
+        }
+
         return true;
     }
 

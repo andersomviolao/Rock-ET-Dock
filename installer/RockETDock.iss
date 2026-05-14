@@ -1,9 +1,10 @@
 #define AppName "Rock ET Dock"
 #ifndef AppVersion
-#define AppVersion "0.3.0"
+#define AppVersion "0.4.0"
 #endif
 #define AppPublisher "Discasa"
 #define AppExeName "Rock ET Dock.exe"
+#define SettingsExeName "Rock ET Dock Settings.exe"
 #define PackageName "Rock-ET-Dock-" + AppVersion + "-win-x64"
 
 [Setup]
@@ -40,6 +41,7 @@ Source: "..\artifacts\publish\{#PackageName}\*"; DestDir: "{app}"; Flags: ignore
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+Name: "{group}\{#AppName} Settings"; Filename: "{app}\{#SettingsExeName}"
 Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 

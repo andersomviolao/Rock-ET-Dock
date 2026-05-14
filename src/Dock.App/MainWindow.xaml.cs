@@ -36,7 +36,6 @@ public partial class MainWindow : Window
     private readonly DockItemExporter _exporter = new();
     private readonly DispatcherTimer _autoHideTimer = new();
     private readonly DispatcherTimer _popupTimer = new();
-    private readonly DispatcherTimer _reorderDragTimer = new();
     private readonly DispatcherTimer _runningStateTimer = new();
     private static MainWindow? s_hotKeyOwner;
     private double _visibleLeft;
@@ -53,9 +52,10 @@ public partial class MainWindow : Window
     private bool _isCompletingReorderDrag;
     private string? _draggedItemId;
     private int _dragStartIndex = -1;
+    private int _lastReorderVisualInsertionIndex = -1;
     private int _externalDropVisualIndex = -1;
     private DateTime _suppressClickUntilUtc;
-    private bool _isOpeningNativeWindowsMenu;
+    private bool _isOpeningShellContextMenu;
     private bool _windowsButtonStartWasOpenOnMouseDown;
     private bool _startMenuOpenedByDock;
     private DateTime _startMenuOpenedByDockAtUtc;
@@ -76,7 +76,7 @@ public partial class MainWindow : Window
 
         Title = $"{UserPaths.AppName} - {bar.Name}";
         DataContext = _viewModel;
-        ContextMenu = BuildContextMenu();
+        DockShell.ContextMenu = BuildContextMenu();
 
         _autoHideTimer.Tick += (_, _) =>
         {
@@ -91,8 +91,6 @@ public partial class MainWindow : Window
             _popupTimer.Stop();
             ShowDock();
         };
-        _reorderDragTimer.Interval = TimeSpan.FromMilliseconds(16);
-        _reorderDragTimer.Tick += (_, _) => PollReorderDrag();
         _runningStateTimer.Interval = TimeSpan.FromMilliseconds(1500);
         _runningStateTimer.Tick += (_, _) => RefreshRunningIndicators();
 
@@ -247,7 +245,8 @@ public partial class MainWindow : Window
 
     private void StartInternalReorderDrag(Button draggedButton, DockItemViewModel draggedItem, Point windowPosition)
     {
-        ResetHoverZoom(immediate: true);
+        var dragPreviewScale = GetDragPreviewScale(draggedButton);
+        StartHoverZoom(Mouse.GetPosition(DockItemsControl));
         _draggedButton = draggedButton;
         _draggedItemViewModel = draggedItem;
         BeginReorderDrag(draggedItem.Item.Id);
@@ -259,16 +258,15 @@ public partial class MainWindow : Window
             _draggedButton = null;
             _draggedItemViewModel = null;
             _pendingDragItem = null;
-            RunOleReorderDragFallback(draggedButton, draggedItem, windowPosition);
+            RunOleReorderDragFallback(draggedButton, draggedItem, windowPosition, dragPreviewScale);
             return;
         }
 
         TraceDrag($"capture-ok item={draggedItem.Item.Id} captured={Mouse.Captured?.GetType().Name ?? "<none>"}");
         BeginHeldItemAnimation(draggedItem, draggedButton);
         DockItemsControl.UpdateLayout();
-        ShowDragPreview(draggedItem, windowPosition);
+        ShowDragPreview(draggedItem, windowPosition, dragPreviewScale);
         UpdateReorderPlaceholderFromPointer(Mouse.GetPosition(DockItemsControl));
-        _reorderDragTimer.Start();
         _suppressClickUntilUtc = DateTime.UtcNow.AddMilliseconds(250);
     }
 
@@ -278,7 +276,7 @@ public partial class MainWindow : Window
                Mouse.Capture(DockRoot, CaptureMode.SubTree);
     }
 
-    private void RunOleReorderDragFallback(Button draggedButton, DockItemViewModel draggedItem, Point windowPosition)
+    private void RunOleReorderDragFallback(Button draggedButton, DockItemViewModel draggedItem, Point windowPosition, double dragPreviewScale)
     {
         var draggedItemId = draggedItem.Item.Id;
         var data = new DataObject(ItemDragFormat, draggedItemId);
@@ -287,7 +285,7 @@ public partial class MainWindow : Window
         BeginReorderDrag(draggedItemId);
         BeginHeldItemAnimation(draggedItem, draggedButton);
         DockItemsControl.UpdateLayout();
-        ShowDragPreview(draggedItem, windowPosition);
+        ShowDragPreview(draggedItem, windowPosition, dragPreviewScale);
 
         try
         {
@@ -330,16 +328,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        UpdateDragPreview(e.GetPosition(this));
-        UpdateReorderPlaceholderFromPointer(e.GetPosition(DockItemsControl));
         e.Handled = true;
     }
 
-    private void PollReorderDrag()
+    private void UpdateReorderDragFrame()
     {
         if (!_isReorderDragActive)
         {
-            _reorderDragTimer.Stop();
+            return;
+        }
+
+        if (!IsLeftMouseButtonDown())
+        {
+            TraceDrag("poll-saw-button-up");
+            CompleteInternalReorderDrag(commit: true);
             return;
         }
 
@@ -353,14 +355,10 @@ public partial class MainWindow : Window
             }
 
             var windowPoint = PointFromScreen(screenPoint);
+            var dockPoint = DockItemsControl.PointFromScreen(screenPoint);
+            StartHoverZoom(dockPoint);
             UpdateDragPreview(windowPoint);
-            UpdateReorderPlaceholderFromPointer(DockItemsControl.PointFromScreen(screenPoint));
-        }
-
-        if (!IsLeftMouseButtonDown())
-        {
-            TraceDrag("poll-saw-button-up");
-            CompleteInternalReorderDrag(commit: true);
+            UpdateReorderPlaceholderFromPointer(dockPoint);
         }
     }
 
@@ -395,7 +393,6 @@ public partial class MainWindow : Window
 
         try
         {
-            _reorderDragTimer.Stop();
             HideDragPreview();
             EndHeldItemAnimation(draggedItem, draggedButton);
 
@@ -578,7 +575,6 @@ public partial class MainWindow : Window
         finally
         {
             EndReorderDrag();
-            _reorderDragTimer.Stop();
             _draggedButton = null;
             _draggedItemViewModel = null;
             _pendingDragItem = null;
@@ -753,7 +749,7 @@ public partial class MainWindow : Window
     private void DockItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: DockItemViewModel itemViewModel } &&
-            (itemViewModel.IsWindowsButton || itemViewModel.IsRecycleBin || itemViewModel.IsAnimatedGif || itemViewModel.IsDropPlaceholder))
+            !itemViewModel.IsDropPlaceholder)
         {
             e.Handled = true;
         }
@@ -761,86 +757,44 @@ public partial class MainWindow : Window
 
     private void DockItem_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: DockItemViewModel { IsWindowsButton: true } })
+        if (sender is FrameworkElement { DataContext: DockItemViewModel itemViewModel })
         {
-            OpenNativeWindowsContextMenu();
-            e.Handled = true;
-            return;
-        }
-
-        if (sender is FrameworkElement { DataContext: DockItemViewModel { IsRecycleBin: true } })
-        {
-            OpenRecycleBinContextMenu(e.GetPosition(this));
-            e.Handled = true;
-            return;
-        }
-
-        if (sender is FrameworkElement { DataContext: DockItemViewModel itemViewModel } &&
-            (itemViewModel.IsAnimatedGif || itemViewModel.IsDropPlaceholder))
-        {
+            OpenShellContextMenu(itemViewModel, e.GetPosition(this));
             e.Handled = true;
         }
     }
 
     private void DockItem_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: DockItemViewModel { IsWindowsButton: true } })
+        if (sender is FrameworkElement { DataContext: DockItemViewModel itemViewModel })
         {
             e.Handled = true;
-            OpenNativeWindowsContextMenu();
-            return;
-        }
-
-        if (sender is FrameworkElement { DataContext: DockItemViewModel { IsRecycleBin: true } })
-        {
-            e.Handled = true;
-            OpenRecycleBinContextMenu(Mouse.GetPosition(this));
-            return;
-        }
-
-        if (sender is FrameworkElement { DataContext: DockItemViewModel itemViewModel } &&
-            (itemViewModel.IsAnimatedGif || itemViewModel.IsDropPlaceholder))
-        {
-            e.Handled = true;
+            OpenShellContextMenu(itemViewModel, Mouse.GetPosition(this));
         }
     }
 
-    private void OpenNativeWindowsContextMenu()
+    private void OpenShellContextMenu(DockItemViewModel itemViewModel, Point windowPoint)
     {
-        if (_isOpeningNativeWindowsMenu)
+        if (itemViewModel.IsDropPlaceholder || _isOpeningShellContextMenu)
         {
             return;
         }
 
-        _isOpeningNativeWindowsMenu = true;
+        _isOpeningShellContextMenu = true;
+        var screenPoint = PointToScreen(windowPoint);
         Dispatcher.BeginInvoke(() =>
         {
             try
             {
-                WindowsButtonService.OpenPowerUserMenu();
+                ShellContextMenuService.ShowForDockItem(this, itemViewModel.Item, screenPoint);
             }
             catch (Exception ex)
             {
-                RuntimeLog.Write(ex, "OpenNativeWindowsContextMenu");
+                RuntimeLog.Write(ex, "OpenShellContextMenu");
             }
             finally
             {
-                _isOpeningNativeWindowsMenu = false;
-            }
-        }, DispatcherPriority.ContextIdle);
-    }
-
-    private void OpenRecycleBinContextMenu(Point windowPoint)
-    {
-        Dispatcher.BeginInvoke(() =>
-        {
-            try
-            {
-                RecycleBinService.ShowContextMenu(this, PointToScreen(windowPoint));
-            }
-            catch (Exception ex)
-            {
-                RuntimeLog.Write(ex, "OpenRecycleBinContextMenu");
+                _isOpeningShellContextMenu = false;
             }
         }, DispatcherPriority.ContextIdle);
     }
@@ -1106,6 +1060,7 @@ public partial class MainWindow : Window
         _isReorderDragActive = true;
         _draggedItemId = draggedItemId;
         _dragStartIndex = _viewModel.Items.ToList().FindIndex(item => item.Item.Id == draggedItemId);
+        _lastReorderVisualInsertionIndex = -1;
     }
 
     private void EndReorderDrag()
@@ -1113,6 +1068,7 @@ public partial class MainWindow : Window
         _isReorderDragActive = false;
         _draggedItemId = null;
         _dragStartIndex = -1;
+        _lastReorderVisualInsertionIndex = -1;
     }
 
     private void UpdateReorderPlaceholderFromPointer(Point pointer)
@@ -1123,6 +1079,12 @@ public partial class MainWindow : Window
         }
 
         var insertionIndex = GetVisualInsertionIndex(pointer);
+        if (insertionIndex == _lastReorderVisualInsertionIndex)
+        {
+            return;
+        }
+
+        _lastReorderVisualInsertionIndex = insertionIndex;
         TraceDrag($"move-placeholder visualIndex={insertionIndex} pointer={pointer.X:0},{pointer.Y:0}");
         MoveDraggedPlaceholderToVisualIndex(insertionIndex);
     }
@@ -1145,19 +1107,17 @@ public partial class MainWindow : Window
         var axisPosition = IsVerticalDock ? pointer.Y : pointer.X;
         var insertionIndex = 0;
 
-        foreach (var item in GetVisibleReorderItems())
+        foreach (var presenter in FindDockItemPresenters(DockItemsControl))
         {
-            var presenter = FindDockItemPresenterById(DockItemsControl, item.Item.Id);
-            if (presenter is null || presenter.ActualWidth <= 0 || presenter.ActualHeight <= 0)
+            if (presenter.Content is not DockItemViewModel item ||
+                item.Item.Id == _draggedItemId ||
+                presenter.ActualWidth <= 0 ||
+                presenter.ActualHeight <= 0)
             {
                 continue;
             }
 
-            var layoutPosition = GetPresenterLayoutPosition(presenter, DockItemsControl);
-            var center = new Point(
-                layoutPosition.X + presenter.ActualWidth / 2,
-                layoutPosition.Y + presenter.ActualHeight / 2);
-            var itemAxisCenter = IsVerticalDock ? center.Y : center.X;
+            var itemAxisCenter = GetCurrentVisualCenterAxis(presenter, DockItemsControl);
             if (axisPosition > itemAxisCenter)
             {
                 insertionIndex++;
@@ -1172,19 +1132,17 @@ public partial class MainWindow : Window
         var axisPosition = IsVerticalDock ? pointer.Y : pointer.X;
         var insertionIndex = 0;
 
-        foreach (var item in _viewModel.Items.Where(static item => !item.IsDropPlaceholder))
+        foreach (var presenter in FindDockItemPresenters(DockItemsControl))
         {
-            var presenter = FindDockItemPresenterById(DockItemsControl, item.Item.Id);
-            if (presenter is null || presenter.ActualWidth <= 0 || presenter.ActualHeight <= 0)
+            if (presenter.Content is not DockItemViewModel item ||
+                item.IsDropPlaceholder ||
+                presenter.ActualWidth <= 0 ||
+                presenter.ActualHeight <= 0)
             {
                 continue;
             }
 
-            var layoutPosition = GetPresenterLayoutPosition(presenter, DockItemsControl);
-            var center = new Point(
-                layoutPosition.X + presenter.ActualWidth / 2,
-                layoutPosition.Y + presenter.ActualHeight / 2);
-            var itemAxisCenter = IsVerticalDock ? center.Y : center.X;
+            var itemAxisCenter = GetCurrentVisualCenterAxis(presenter, DockItemsControl);
             if (axisPosition > itemAxisCenter)
             {
                 insertionIndex++;
@@ -1277,7 +1235,7 @@ public partial class MainWindow : Window
         var insertionIndex = ConvertVisualInsertionIndexToFullIndex(visualInsertionIndex);
         TraceDrag($"move-request visualIndex={visualInsertionIndex} fullIndex={insertionIndex}");
         return AnimateReorderChange(
-            () => _viewModel.MoveItemToIndex(_draggedItemId, insertionIndex),
+            () => _viewModel.MoveItemToIndex(_draggedItemId, insertionIndex, persist: false),
             _draggedItemId);
     }
 
@@ -1336,7 +1294,7 @@ public partial class MainWindow : Window
 
     private void AnimateDockItemsFrom(Dictionary<string, Point> previousPositions, string excludedItemId)
     {
-        var duration = TimeSpan.FromMilliseconds(190);
+        var duration = TimeSpan.FromMilliseconds(105);
         var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
 
         foreach (var presenter in FindDockItemPresenters(DockItemsControl))
@@ -1363,10 +1321,12 @@ public partial class MainWindow : Window
             translate.Y = deltaY;
             translate.BeginAnimation(
                 TranslateTransform.XProperty,
-                new DoubleAnimation(0, duration) { EasingFunction = easing });
+                new DoubleAnimation(0, duration) { EasingFunction = easing },
+                HandoffBehavior.SnapshotAndReplace);
             translate.BeginAnimation(
                 TranslateTransform.YProperty,
-                new DoubleAnimation(0, duration) { EasingFunction = easing });
+                new DoubleAnimation(0, duration) { EasingFunction = easing },
+                HandoffBehavior.SnapshotAndReplace);
         }
     }
 
@@ -1382,16 +1342,11 @@ public partial class MainWindow : Window
             draggedItemId);
     }
 
-    private IEnumerable<DockItemViewModel> GetVisibleReorderItems()
-    {
-        return _viewModel.Items.Where(item => item.Item.Id != _draggedItemId);
-    }
-
     private bool IsVerticalDock => _bar.Edge is DockEdge.Left or DockEdge.Right;
 
-    private void ShowDragPreview(DockItemViewModel itemViewModel, Point position)
+    private void ShowDragPreview(DockItemViewModel itemViewModel, Point position, double dragPreviewScale)
     {
-        _dragPreviewShell = CreateDragPreview(itemViewModel);
+        _dragPreviewShell = CreateDragPreview(itemViewModel, dragPreviewScale);
         _dragPreviewPopup ??= new Popup
         {
             AllowsTransparency = true,
@@ -1408,23 +1363,25 @@ public partial class MainWindow : Window
         AnimateDragPreviewLift(_dragPreviewShell);
     }
 
-    private Border CreateDragPreview(DockItemViewModel itemViewModel)
+    private Border CreateDragPreview(DockItemViewModel itemViewModel, double dragPreviewScale)
     {
         var previewSize = _viewModel.ItemButtonSize;
+        var previewExtent = Math.Ceiling(previewSize * dragPreviewScale) + 4;
         var shell = new Border
         {
-            Width = previewSize,
-            Height = previewSize,
+            Width = previewExtent,
+            Height = previewExtent,
             Padding = new Thickness(0),
             Background = Brushes.Transparent,
             BorderBrush = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             CornerRadius = new CornerRadius(0),
+            ClipToBounds = false,
             Opacity = 0.98,
             SnapsToDevicePixels = true,
             UseLayoutRounding = true,
             RenderTransformOrigin = new Point(0.5, 0.5),
-            RenderTransform = new ScaleTransform(0.82, 0.82),
+            RenderTransform = new ScaleTransform(1, 1),
             CacheMode = new BitmapCache
             {
                 EnableClearType = true,
@@ -1435,8 +1392,14 @@ public partial class MainWindow : Window
 
         var grid = new Grid
         {
+            Width = previewSize,
+            Height = previewSize,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
             ClipToBounds = false,
-            IsHitTestVisible = false
+            IsHitTestVisible = false,
+            RenderTransformOrigin = new Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(dragPreviewScale, dragPreviewScale)
         };
 
         grid.Children.Add(new Border
@@ -1502,8 +1465,8 @@ public partial class MainWindow : Window
 
         var duration = TimeSpan.FromMilliseconds(120);
         var ease = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.22 };
-        scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(1.08, duration) { EasingFunction = ease });
-        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1.08, duration) { EasingFunction = ease });
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(1.0, duration) { EasingFunction = ease });
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1.0, duration) { EasingFunction = ease });
         preview.BeginAnimation(OpacityProperty, new DoubleAnimation(0.94, duration));
     }
 
@@ -1529,7 +1492,19 @@ public partial class MainWindow : Window
         }
 
         button.BeginAnimation(OpacityProperty, null);
-        AnimateScale(button, 1.0);
+    }
+
+    private double GetDragPreviewScale(Button button)
+    {
+        if (!_bar.ZoomEnabled)
+        {
+            return 1.0;
+        }
+
+        var (scale, _) = EnsureItemTransforms(button);
+        var currentScale = Math.Max(scale.ScaleX, scale.ScaleY);
+        var focusedScale = _viewModel.GetZoomScaleForDistance(0);
+        return Math.Clamp(Math.Max(currentScale, focusedScale), 1.0, 1.8);
     }
 
     private void EndHeldItemAnimation(DockItemViewModel itemViewModel, Button? button)
@@ -1542,7 +1517,6 @@ public partial class MainWindow : Window
         }
 
         button.Opacity = 1.0;
-        AnimateScale(button, 1.0);
     }
 
     private void AnimateDropSettle(string draggedItemId)
@@ -1906,9 +1880,6 @@ public partial class MainWindow : Window
         var text = TextCatalog.Get(_store.Current.App.Language);
         var menu = new System.Windows.Controls.ContextMenu();
 
-        menu.Items.Add(CreateMenuItem(text["MenuDockSettings"], (_, _) => OpenSettings()));
-        menu.Items.Add(new System.Windows.Controls.Separator());
-
         var addMenu = new System.Windows.Controls.MenuItem { Header = text["MenuAddItem"] };
         addMenu.Items.Add(CreateMenuItem(text["MenuFile"], (_, _) => AddFilesFromDialog()));
         addMenu.Items.Add(CreateMenuItem(text["MenuFolder"], (_, _) => AddFolderFromDialog()));
@@ -1921,17 +1892,6 @@ public partial class MainWindow : Window
         {
             DockLauncher.Open(new DockItem { TargetPath = UserPaths.EnsureBarFolder(_bar.Name) });
         }));
-
-        menu.Items.Add(new System.Windows.Controls.Separator());
-
-        var createMenu = new System.Windows.Controls.MenuItem { Header = text["MenuCreateNewDock"] };
-        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Left), (_, _) => CurrentApp.CreateBar(DockEdge.Left)));
-        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Right), (_, _) => CurrentApp.CreateBar(DockEdge.Right)));
-        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Top), (_, _) => CurrentApp.CreateBar(DockEdge.Top)));
-        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Bottom), (_, _) => CurrentApp.CreateBar(DockEdge.Bottom)));
-        menu.Items.Add(createMenu);
-
-        menu.Items.Add(new System.Windows.Controls.Separator());
 
         var positionMenu = new System.Windows.Controls.MenuItem { Header = text["MenuMoveDock"] };
         positionMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Left), (_, _) => ChangeEdge(DockEdge.Left)));
@@ -2071,7 +2031,7 @@ public partial class MainWindow : Window
         ApplyLayering();
     }
 
-    private void OpenSettings()
+    internal void OpenSettings()
     {
         if (_settingsWindow is { IsVisible: true })
         {
@@ -2086,9 +2046,11 @@ public partial class MainWindow : Window
         };
         _settingsWindow = settingsWindow;
         settingsWindow.SettingsApplied += SettingsWindow_SettingsApplied;
+        settingsWindow.CreateBarRequested += SettingsWindow_CreateBarRequested;
         settingsWindow.Closed += (_, _) =>
         {
             settingsWindow.SettingsApplied -= SettingsWindow_SettingsApplied;
+            settingsWindow.CreateBarRequested -= SettingsWindow_CreateBarRequested;
             if (ReferenceEquals(_settingsWindow, settingsWindow))
             {
                 _settingsWindow = null;
@@ -2097,6 +2059,11 @@ public partial class MainWindow : Window
 
         settingsWindow.Show();
         settingsWindow.Activate();
+    }
+
+    private void SettingsWindow_CreateBarRequested(object? sender, DockEdge edge)
+    {
+        CurrentApp.CreateBar(edge);
     }
 
     private void SettingsWindow_SettingsApplied(object? sender, EventArgs e)
@@ -2194,7 +2161,7 @@ public partial class MainWindow : Window
         Title = $"{UserPaths.AppName} - {_bar.Name}";
         Topmost = _bar.Layering == DockLayering.TopMost;
         DockShell.AllowDrop = !_bar.LockItems;
-        ContextMenu = BuildContextMenu();
+        DockShell.ContextMenu = BuildContextMenu();
         ConfigureHideTimers();
         _viewModel.SetLanguage(_store.Current.App.Language);
         _viewModel.SyncPersistentItemsFromSettings();
@@ -2441,6 +2408,11 @@ public partial class MainWindow : Window
 
     private void CompositionTarget_Rendering(object? sender, EventArgs e)
     {
+        if (_isReorderDragActive)
+        {
+            UpdateReorderDragFrame();
+        }
+
         if (!_isHoverZoomActive && !_isHoverZoomSettling)
         {
             return;
@@ -2649,6 +2621,18 @@ public partial class MainWindow : Window
     private static Point GetVisualPosition(FrameworkElement element, Visual ancestor)
     {
         return element.TransformToAncestor(ancestor).Transform(new Point(0, 0));
+    }
+
+    private double GetCurrentVisualCenterAxis(ContentPresenter presenter, Visual ancestor)
+    {
+        if (FindVisualChild<Button>(presenter) is { ActualWidth: > 0, ActualHeight: > 0 } button)
+        {
+            var center = button.TransformToAncestor(ancestor).Transform(new Point(button.ActualWidth / 2, button.ActualHeight / 2));
+            return IsVerticalDock ? center.Y : center.X;
+        }
+
+        var centerPosition = presenter.TransformToAncestor(ancestor).Transform(new Point(presenter.ActualWidth / 2, presenter.ActualHeight / 2));
+        return IsVerticalDock ? centerPosition.Y : centerPosition.X;
     }
 
     private static Point GetLayoutPosition(Button button, Visual ancestor)
