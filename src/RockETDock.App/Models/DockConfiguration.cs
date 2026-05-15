@@ -5,11 +5,15 @@ namespace RockETDock.App.Models;
 
 public sealed class DockConfiguration
 {
+    public const int MaxBars = 4;
+
     public int Version { get; set; } = 1;
 
     public ApplicationSettings App { get; set; } = new();
 
     public List<DockBarSettings> Bars { get; set; } = [];
+
+    public bool CanCreateBar => Bars.Count < MaxBars;
 }
 
 public sealed class ApplicationSettings
@@ -117,6 +121,11 @@ public sealed class DockBarSettings
             Name = name,
             Edge = edge
         };
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 }
 

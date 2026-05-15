@@ -1,6 +1,6 @@
 #define AppName "Rock ET Dock"
 #ifndef AppVersion
-#define AppVersion "0.4.1"
+#define AppVersion "0.4.2"
 #endif
 #define AppPublisher "Discasa"
 #define AppExeName "Rock ET Dock.exe"

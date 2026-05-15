@@ -78,9 +78,20 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
 
     public double IconImageSize => Clamp(Bar.IconSize, 12, 96);
 
-    public Thickness ItemMargin => new(Clamp(Bar.IconSpacing, 0, 80) / 2.0);
+    public Thickness ItemMargin
+    {
+        get
+        {
+            var halfSpacing = Clamp(Bar.IconSpacing, 0, 80) / 2.0;
+            return Orientation == System.Windows.Controls.Orientation.Vertical
+                ? new Thickness(0, halfSpacing, 0, halfSpacing)
+                : new Thickness(halfSpacing, 0, halfSpacing, 0);
+        }
+    }
 
-    public Thickness ItemContentMargin => new(0, 0, 0, Clamp(Bar.IconBottomMargin, 0, 120));
+    public Thickness ItemContentMargin => new(0);
+
+    public double ItemContentOffsetY => -Clamp(Bar.IconBottomMargin, 0, 120);
 
     public CornerRadius ShellCornerRadius => new(Clamp(
         Bar.ShellCornerRadius >= 0 ? Bar.ShellCornerRadius : GetThemePalette(Bar.Theme).ShellCornerRadius,
@@ -110,9 +121,9 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         ? CrossAxisZoomOverhang
         : PrimaryAxisZoomOverhang;
 
-    public double VerticalZoomOverhang => Orientation == System.Windows.Controls.Orientation.Vertical
+    public double VerticalZoomOverhang => (Orientation == System.Windows.Controls.Orientation.Vertical
         ? PrimaryAxisZoomOverhang
-        : CrossAxisZoomOverhang;
+        : CrossAxisZoomOverhang) + IconBottomOffsetExtent;
 
     public double ZoomOverhang => Math.Max(HorizontalZoomOverhang, VerticalZoomOverhang);
 
@@ -396,6 +407,7 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IconImageSize));
         OnPropertyChanged(nameof(ItemMargin));
         OnPropertyChanged(nameof(ItemContentMargin));
+        OnPropertyChanged(nameof(ItemContentOffsetY));
         OnPropertyChanged(nameof(ShellCornerRadius));
         OnPropertyChanged(nameof(TileCornerRadius));
         OnPropertyChanged(nameof(LabelFontSize));
@@ -470,6 +482,8 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
     private double FocusedZoomScale => Clamp((double)Bar.ZoomSize / Math.Max(1, Bar.IconSize), 1.0, 1.8);
 
     private int ShellBackgroundOpacityPercent => Clamp(Bar.BackgroundOpacity, 0, 100);
+
+    private double IconBottomOffsetExtent => Clamp(Bar.IconBottomMargin, 0, 120);
 
     private double CalculateRequiredHoverAxisExtent()
     {

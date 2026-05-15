@@ -10,9 +10,10 @@ public static class DockGeometry
         var itemCount = Math.Max(1, input.ItemCount);
         var itemStep = input.ItemButtonSize + Math.Max(0, input.IconSpacing);
         var thickness = input.ItemButtonSize + 28;
-        var edgeDistance = 8 + input.EdgeDistance;
+        var edgeDistance = Math.Max(0, 8 + input.EdgeDistance);
         var maxShellWidth = Math.Max(40, input.WorkingWidth - 32 - (input.HorizontalOverhang * 2));
         var maxShellHeight = Math.Max(40, input.WorkingHeight - 32 - (input.VerticalOverhang * 2));
+        var requiredPrimarySize = itemCount * itemStep + 24;
 
         double shellWidth;
         double shellHeight;
@@ -20,20 +21,20 @@ public static class DockGeometry
         if (input.Edge is DockEdge.Left or DockEdge.Right)
         {
             shellWidth = input.BarWidth > 0
-                ? Clamp(input.BarWidth, 40, maxShellWidth)
-                : thickness;
+                ? ClampToAvailable(input.BarWidth, thickness, maxShellWidth)
+                : Math.Min(maxShellWidth, thickness);
             shellHeight = input.BarHeight > 0
-                ? Clamp(input.BarHeight, Math.Min(thickness + 24, maxShellHeight), maxShellHeight)
-                : Math.Min(maxShellHeight, Math.Max(thickness + 24, itemCount * itemStep + 24));
+                ? ClampToAvailable(input.BarHeight, requiredPrimarySize, maxShellHeight)
+                : Math.Min(maxShellHeight, Math.Max(thickness + 24, requiredPrimarySize));
         }
         else
         {
             shellWidth = input.BarWidth > 0
-                ? Clamp(input.BarWidth, Math.Min(thickness + 80, maxShellWidth), maxShellWidth)
-                : Math.Min(maxShellWidth, Math.Max(thickness + 80, itemCount * itemStep + 24));
+                ? ClampToAvailable(input.BarWidth, requiredPrimarySize, maxShellWidth)
+                : Math.Min(maxShellWidth, Math.Max(thickness + 80, requiredPrimarySize));
             shellHeight = input.BarHeight > 0
-                ? Clamp(input.BarHeight, 40, maxShellHeight)
-                : thickness;
+                ? ClampToAvailable(input.BarHeight, thickness, maxShellHeight)
+                : Math.Min(maxShellHeight, thickness);
         }
 
         var windowWidth = shellWidth + (input.HorizontalOverhang * 2);
@@ -66,6 +67,18 @@ public static class DockGeometry
                 break;
         }
 
+        var shellLeft = Clamp(
+            windowLeft + input.HorizontalOverhang,
+            input.WorkingLeft,
+            input.WorkingLeft + input.WorkingWidth - shellWidth);
+        var shellTop = Clamp(
+            windowTop + input.VerticalOverhang,
+            input.WorkingTop,
+            input.WorkingTop + input.WorkingHeight - shellHeight);
+
+        windowLeft = shellLeft - input.HorizontalOverhang;
+        windowTop = shellTop - input.VerticalOverhang;
+
         return new DockPlacement(windowLeft, windowTop, windowWidth, windowHeight, shellWidth, shellHeight);
     }
 
@@ -77,6 +90,11 @@ public static class DockGeometry
         }
 
         return value < minimum ? minimum : value > maximum ? maximum : value;
+    }
+
+    private static double ClampToAvailable(double value, double desiredMinimum, double maximum)
+    {
+        return Clamp(value, Math.Min(desiredMinimum, maximum), maximum);
     }
 }
 

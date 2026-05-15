@@ -34,14 +34,14 @@ No portable zip. No loose DLL hunt. Install it, launch it, tune it, move on.
 
 ## What It Does
 
-- Runs as a clean per-user dock for Windows, with one app managing multiple docks.
+- Runs as a clean per-user dock for Windows, with one app managing up to four docks.
 - Starts new docks with Windows, Windows Settings, File Explorer, Microsoft Edge, and Recycle Bin ready.
 - Supports files, folders, links, separators, animated GIFs, the native Recycle Bin, and temporary minimized-window items.
 - Opens the native Start menu with left-click on the Windows button and the native Win+X menu with right-click.
 - Shows native Windows shell context menus on dock items, so right-click behavior feels like Explorer.
 - Lets you place docks on the top, bottom, left, or right edge, with true vertical layout on the side edges.
 - Applies every setting immediately. There is no Apply button and no waiting room.
-- Ships a separate **Rock ET Dock Settings** launcher for configuration and new dock creation.
+- Ships a separate **Rock ET Dock Settings** launcher with a Home dock selector and new dock creation.
 - Hides the native Windows taskbar while Rock ET Dock is running, then restores it on exit.
 - Uses hover magnification that pushes neighboring icons aside instead of stacking them.
 - Supports English and Brazilian Portuguese from the settings window.
@@ -60,13 +60,13 @@ The installer is the intended distribution path. The app is self-contained, so t
 
 Open **Rock ET Dock Settings** from the Start Menu. In the repository build, `dock_settings.bat` opens the same settings-only mode.
 
-- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, new dock creation, move modifier key, GIF modifier key, and managed dock folder.
+- **Home:** app settings, the selected dock, the four-dock limit, new dock creation, dock name, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, move modifier key, GIF modifier key, and managed dock folder.
 - **Icons:** size, opacity, labels, spacing, bottom margin, quality, hover magnification, magnification range, and animated GIF items.
 - **Position:** monitor, screen edge, layering, width, height, edge distance, and center offset.
 - **Style:** themes, background opacity, dock radius, icon tile radius, font, font size, and label color.
 - **Behavior:** minimized-window items, running indicators, existing-instance activation, and mouseover popup.
 
-The settings window uses a Windows Settings-style layout and follows the system light/dark app theme. When the dock is already running, the settings launcher asks that live process to open settings, so changes still apply immediately.
+The settings window uses a Windows Settings-style layout and follows the system light/dark app theme. Choose a dock at the top of Home; the Icons, Position, Style, and dock-specific Home settings edit that selected dock. When the dock is already running, the settings launcher asks that live process to open settings, so changes still apply immediately.
 
 ## Data Contract
 

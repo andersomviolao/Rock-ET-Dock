@@ -114,6 +114,9 @@
                                       Margin="{Binding DataContext.ItemContentMargin, RelativeSource={RelativeSource AncestorType=Window}}"
                                       Visibility="{Binding ContentVisibility}"
                                       Opacity="{Binding DragOpacity}">
+                                    <Grid.RenderTransform>
+                                        <TranslateTransform Y="{Binding DataContext.ItemContentOffsetY, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </Grid.RenderTransform>
                                     <Border Width="{Binding DataContext.IconTileSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                             Height="{Binding DataContext.IconTileSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                             Background="{Binding DataContext.TileBackground, RelativeSource={RelativeSource AncestorType=Window}}"

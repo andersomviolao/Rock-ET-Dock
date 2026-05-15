@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## 0.4.2 - 2026-05-15
+
+- Added a Home dock manager in settings with a selected-dock switcher, edge-based creation buttons, and a hard limit of four docks.
+- Routed settings edits through the selected dock so icon, position, style, drag, auto-hide, and item options apply to the intended bar instead of only the bar that opened settings.
+- Replaced several ambiguous settings glyphs with semantic vector icons and fixed broken corner-radius glyph rendering.
+- Fixed dock geometry sliders so item spacing changes only the dock's primary axis, icon bottom margin no longer squeezes item content, and custom bar sizes or edge offsets cannot crop the visible item row or stack.
+- Fixed settings text boxes so their text is vertically centered instead of clipped, made settings windows normal non-topmost windows, and tightened auto-hide so it starts immediately after enabling and reveals with hover magnification in sync.
+- Set the application and installer metadata to version `0.4.2`.
+
 ## 0.4.1 - 2026-05-14
 
 - Connected the remaining settings UI placeholders: app display name editing, functional settings search, and live minimize-animation control.

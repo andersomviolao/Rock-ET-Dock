@@ -62,19 +62,24 @@ public partial class App : System.Windows.Application
         RefreshGlobalServices();
     }
 
-    internal void CreateBar(DockEdge edge)
+    internal DockBarSettings? CreateBar(DockEdge edge)
     {
-        CreateBar(edge, showWindow: !_settingsOnlyMode);
+        return CreateBar(edge, showWindow: !_settingsOnlyMode);
     }
 
-    internal void CreateBar(DockEdge edge, bool showWindow)
+    internal DockBarSettings? CreateBar(DockEdge edge, bool showWindow)
     {
         if (_store is null)
         {
-            return;
+            return null;
         }
 
         var configuration = _store.Current;
+        if (!configuration.CanCreateBar)
+        {
+            return null;
+        }
+
         var text = TextCatalog.Get(configuration.App.Language);
         var baseName = edge switch
         {
@@ -92,6 +97,8 @@ public partial class App : System.Windows.Application
         {
             ShowBar(bar);
         }
+
+        return bar;
     }
 
     internal void SaveConfiguration()
@@ -145,6 +152,17 @@ public partial class App : System.Windows.Application
             foreach (var window in _windows)
             {
                 window.ClearRuntimeWindows();
+            }
+        }
+    }
+
+    internal void RefreshBarWindows(DockBarSettings? changedBar = null)
+    {
+        foreach (var window in _windows.ToArray())
+        {
+            if (changedBar is null || window.IsForBar(changedBar))
+            {
+                window.RefreshFromConfiguration();
             }
         }
     }
@@ -328,7 +346,7 @@ public partial class App : System.Windows.Application
             ShowInTaskbar = true,
             WindowStartupLocation = WindowStartupLocation.CenterScreen
         };
-        settingsWindow.CreateBarRequested += (_, edge) => CreateBar(edge, showWindow: false);
+        settingsWindow.CreateBarRequested += (_, args) => args.CreatedBar = CreateBar(args.Edge, showWindow: false);
         settingsWindow.Closed += (_, _) => Shutdown();
         settingsWindow.Show();
         settingsWindow.Activate();

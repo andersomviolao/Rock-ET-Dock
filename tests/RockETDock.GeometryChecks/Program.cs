@@ -49,8 +49,10 @@ ValidateNeighborZoomScale();
 ValidateHoverZoomOffsets();
 ValidateHoverOverhangPreventsEdgeClipping();
 ValidateCustomBarGeometry();
+ValidateSliderGeometryExtremes();
 ValidatePlaceholderIsGapOnly();
 ValidateLocalization();
+ValidateDockLimit();
 ValidateVerticalDockGeometryAndOrientation();
 ValidateTransparentBackgroundOpacity();
 
@@ -67,8 +69,10 @@ Console.WriteLine("Dock neighbor zoom checks passed.");
 Console.WriteLine("Dock hover zoom offset checks passed.");
 Console.WriteLine("Dock hover overhang checks passed.");
 Console.WriteLine("Dock custom bar sizing checks passed.");
+Console.WriteLine("Dock slider geometry checks passed.");
 Console.WriteLine("Dock placeholder gap checks passed.");
 Console.WriteLine("Dock localization checks passed.");
+Console.WriteLine("Dock limit checks passed.");
 Console.WriteLine("Dock vertical edge checks passed.");
 Console.WriteLine("Dock transparent background checks passed.");
 
@@ -592,6 +596,102 @@ void ValidateCustomBarGeometry()
     AssertNear(120, placement.ShellHeight, "custom horizontal bar height");
 }
 
+void ValidateSliderGeometryExtremes()
+{
+    foreach (var edge in Enum.GetValues<DockEdge>())
+    {
+        foreach (var iconSize in new[] { 12, 40, 96 })
+        {
+            foreach (var spacing in new[] { 0, 8, 40 })
+            {
+                var bar = new DockBarSettings
+                {
+                    Edge = edge,
+                    IconSize = iconSize,
+                    IconSpacing = spacing,
+                    IconBottomMargin = 60,
+                    ZoomEnabled = false,
+                    BarWidth = 1,
+                    BarHeight = 1
+                };
+                var viewModel = new DockBarViewModel(bar);
+
+                ValidateSpacingMarginAxis(edge, spacing, viewModel.ItemMargin);
+                AssertNear(-60, viewModel.ItemContentOffsetY, $"{edge} icon bottom offset");
+                AssertTrue(viewModel.ItemContentMargin.Top == 0 && viewModel.ItemContentMargin.Bottom == 0, $"{edge} icon bottom margin should not squeeze item content");
+                AssertNear(12, viewModel.HorizontalZoomOverhang, $"{edge} bottom offset should not inflate horizontal overhang");
+                AssertNear(72, viewModel.VerticalZoomOverhang, $"{edge} bottom offset should reserve vertical overhang");
+
+                foreach (var edgeDistance in new[] { -220, 0, 200 })
+                {
+                    foreach (var centerOffset in new[] { -800, 0, 800 })
+                    {
+                        var placement = DockGeometry.Calculate(new DockGeometryInput(
+                            edge,
+                            areaLeft,
+                            areaTop,
+                            areaWidth,
+                            areaHeight,
+                            ItemCount: 5,
+                            viewModel.ItemButtonSize,
+                            spacing,
+                            viewModel.HorizontalZoomOverhang,
+                            viewModel.VerticalZoomOverhang,
+                            EdgeDistance: edgeDistance,
+                            CenterOffset: centerOffset,
+                            BarWidth: bar.BarWidth,
+                            BarHeight: bar.BarHeight));
+
+                        var requiredPrimarySize = 5 * (viewModel.ItemButtonSize + spacing) + 24;
+                        var requiredCrossSize = viewModel.ItemButtonSize + 28;
+                        if (edge is DockEdge.Left or DockEdge.Right)
+                        {
+                            AssertTrue(placement.ShellWidth >= requiredCrossSize, $"{edge} width slider should not clip item cross-axis");
+                            AssertTrue(placement.ShellHeight >= requiredPrimarySize, $"{edge} height slider should not clip item stack");
+                        }
+                        else
+                        {
+                            AssertTrue(placement.ShellWidth >= requiredPrimarySize, $"{edge} width slider should not clip item row");
+                            AssertTrue(placement.ShellHeight >= requiredCrossSize, $"{edge} height slider should not clip item cross-axis");
+                        }
+
+                        ValidateShellWithinWorkingArea($"{edge} edgeDistance={edgeDistance} centerOffset={centerOffset}", placement, viewModel);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ValidateSpacingMarginAxis(DockEdge edge, int spacing, System.Windows.Thickness margin)
+{
+    var half = spacing / 2.0;
+    if (edge is DockEdge.Left or DockEdge.Right)
+    {
+        AssertNear(0, margin.Left, $"{edge} spacing left margin");
+        AssertNear(0, margin.Right, $"{edge} spacing right margin");
+        AssertNear(half, margin.Top, $"{edge} spacing top margin");
+        AssertNear(half, margin.Bottom, $"{edge} spacing bottom margin");
+        return;
+    }
+
+    AssertNear(half, margin.Left, $"{edge} spacing left margin");
+    AssertNear(half, margin.Right, $"{edge} spacing right margin");
+    AssertNear(0, margin.Top, $"{edge} spacing top margin");
+    AssertNear(0, margin.Bottom, $"{edge} spacing bottom margin");
+}
+
+void ValidateShellWithinWorkingArea(string scenario, DockPlacement placement, DockBarViewModel viewModel)
+{
+    var shellLeft = placement.WindowLeft + viewModel.HorizontalZoomOverhang;
+    var shellTop = placement.WindowTop + viewModel.VerticalZoomOverhang;
+
+    AssertTrue(shellLeft >= areaLeft - 0.001, $"{scenario} shell should not move left of working area");
+    AssertTrue(shellTop >= areaTop - 0.001, $"{scenario} shell should not move above working area");
+    AssertTrue(shellLeft + placement.ShellWidth <= areaLeft + areaWidth + 0.001, $"{scenario} shell should not move right of working area");
+    AssertTrue(shellTop + placement.ShellHeight <= areaTop + areaHeight + 0.001, $"{scenario} shell should not move below working area");
+}
+
 void ValidatePlaceholderIsGapOnly()
 {
     var placeholder = new DockItemViewModel(new DockItem
@@ -625,6 +725,21 @@ void ValidateLocalization()
 
     viewModel.SetLanguage(TextCatalog.PortugueseBrazil);
     AssertTrue(viewModel.Items[0].DisplayName == "Lixeira", "Brazilian Portuguese recycle bin item label");
+}
+
+void ValidateDockLimit()
+{
+    var configuration = new DockConfiguration();
+    for (var index = 0; index < DockConfiguration.MaxBars; index++)
+    {
+        configuration.Bars.Add(DockBarSettings.Create($"Bar {index + 1}", DockEdge.Bottom));
+    }
+
+    AssertTrue(DockConfiguration.MaxBars == 4, "dock limit should be four bars");
+    AssertTrue(!configuration.CanCreateBar, "configuration should block creating a fifth bar");
+
+    configuration.Bars.RemoveAt(configuration.Bars.Count - 1);
+    AssertTrue(configuration.CanCreateBar, "configuration should allow creating a fourth bar");
 }
 
 void ValidateVerticalDockGeometryAndOrientation()

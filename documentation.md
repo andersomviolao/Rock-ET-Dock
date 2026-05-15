@@ -55,7 +55,7 @@ dotnet run --project src\RockETDock.App\RockETDock.App.csproj
 
 ## Current Features
 
-- Multiple docks managed by one app instance.
+- Up to four docks managed by one app instance.
 - Top, bottom, left, and right positioning, with vertical item layout on the left and right edges.
 - Fine-grained settings for icon size, hover zoom, zoom range, opacity, spacing, margins, width, height, edge distance, center offset, and layering.
 - Built-in themes inspired by reference skin names, implemented with project-owned colors and shapes.
@@ -67,7 +67,7 @@ dotnet run --project src\RockETDock.App\RockETDock.App.csproj
 - Recycle Bin item with native context menu and file-drop deletion.
 - Option to hide the native Windows taskbar while the app is running.
 - Separate settings launcher executable and Start Menu shortcut.
-- Windows Settings-style settings window with system light/dark theme following and an area for creating new docks.
+- Windows Settings-style settings window with system light/dark theme following, a Home dock selector, and an area for creating new docks up to the four-dock limit.
 - Temporary items for minimized windows.
 - Global `Ctrl+Alt+R` hotkey to hide or show all open docks.
 - Running-app indicators and existing-instance activation for resolvable `.exe` items and `.lnk` shortcuts.
@@ -84,8 +84,10 @@ dotnet run --project src\RockETDock.App\RockETDock.App.csproj
 - Special shell-backed items stay separate from normal file-system items. Recycle Bin and Windows button behavior uses dedicated services.
 - The settings launcher uses a named pipe to ask the running dock process to open settings. If the dock is not running, it opens a settings-only process and writes the same user configuration.
 - The settings window saves and reflects changes immediately when connected to the live dock process.
+- The settings window edits one selected dock at a time. The Home selector chooses the target dock, and the icon, position, style, drag, auto-hide, and item settings below it are saved to that dock's own `DockBarSettings`.
 - Hover zoom uses frame interpolation and layout offsets so neighboring icons move aside instead of overlapping.
 - Running indicators use best-effort executable-path matching. Documents, URLs, modern/UWP apps, and indirect commands may not map to an existing visible window.
+- Windows notification-area/tray icons are not rehosted by the current implementation. Windows does not expose a stable public API for third-party docks to capture and reparent the native tray; a future tray-like dock should treat that as an explicit shell-integration feature instead of normal minimized-window capture.
 
 ## Packaging
 

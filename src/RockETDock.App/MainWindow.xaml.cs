@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private readonly DockItemExporter _exporter = new();
     private readonly DispatcherTimer _autoHideTimer = new();
     private readonly DispatcherTimer _popupTimer = new();
+    private readonly DispatcherTimer _autoHideEdgeTimer = new();
     private readonly DispatcherTimer _runningStateTimer = new();
     private static MainWindow? s_hotKeyOwner;
     private double _visibleLeft;
@@ -62,6 +63,8 @@ public partial class MainWindow : Window
     private SettingsWindow? _settingsWindow;
     private bool _isHoverZoomActive;
     private bool _isHoverZoomSettling;
+    private bool _isAutoHideRevealActive;
+    private DateTime _autoHideRevealEndsAtUtc;
     private Point _hoverZoomPointer;
     private TimeSpan _lastHoverRenderingTime;
     private GlobalHotKey? _globalHotKey;
@@ -91,6 +94,8 @@ public partial class MainWindow : Window
             _popupTimer.Stop();
             ShowDock();
         };
+        _autoHideEdgeTimer.Interval = TimeSpan.FromMilliseconds(35);
+        _autoHideEdgeTimer.Tick += (_, _) => MonitorAutoHideRevealEdge();
         _runningStateTimer.Interval = TimeSpan.FromMilliseconds(1500);
         _runningStateTimer.Tick += (_, _) => RefreshRunningIndicators();
 
@@ -116,6 +121,7 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             CompositionTarget.Rendering -= CompositionTarget_Rendering;
+            _autoHideEdgeTimer.Stop();
             _runningStateTimer.Stop();
             ReleaseGlobalHotKey();
         };
@@ -587,8 +593,7 @@ public partial class MainWindow : Window
             if (_bar.AutoHide && !DockShell.IsMouseOver)
             {
                 _isPointerInside = false;
-                _autoHideTimer.Stop();
-                _autoHideTimer.Start();
+                StartAutoHideCountdown();
             }
 
             _isCompletingReorderDrag = false;
@@ -801,7 +806,7 @@ public partial class MainWindow : Window
 
     private void DockItem_MouseEnter(object sender, MouseEventArgs e)
     {
-        if (!_bar.ZoomEnabled || sender is not Button button)
+        if (!CanStartHoverZoom(e) || sender is not Button)
         {
             return;
         }
@@ -835,7 +840,7 @@ public partial class MainWindow : Window
 
     private void DockShell_MouseMove(object sender, MouseEventArgs e)
     {
-        if (!_bar.ZoomEnabled || _isReorderDragActive || e.LeftButton == MouseButtonState.Pressed)
+        if (!CanStartHoverZoom(e))
         {
             return;
         }
@@ -2041,8 +2046,8 @@ public partial class MainWindow : Window
 
         var settingsWindow = new SettingsWindow(_store, _bar)
         {
-            Owner = this,
-            ShowInTaskbar = false
+            ShowInTaskbar = true,
+            Topmost = false
         };
         _settingsWindow = settingsWindow;
         settingsWindow.SettingsApplied += SettingsWindow_SettingsApplied;
@@ -2061,15 +2066,26 @@ public partial class MainWindow : Window
         settingsWindow.Activate();
     }
 
-    private void SettingsWindow_CreateBarRequested(object? sender, DockEdge edge)
+    private void SettingsWindow_CreateBarRequested(object? sender, SettingsWindow.DockBarCreationEventArgs e)
     {
-        CurrentApp.CreateBar(edge);
+        e.CreatedBar = CurrentApp.CreateBar(e.Edge);
     }
 
-    private void SettingsWindow_SettingsApplied(object? sender, EventArgs e)
+    private void SettingsWindow_SettingsApplied(object? sender, SettingsWindow.SettingsAppliedEventArgs e)
     {
-        ApplyBarSettings();
+        CurrentApp.RefreshBarWindows();
         CurrentApp.RefreshGlobalServices();
+    }
+
+    internal bool IsForBar(DockBarSettings bar)
+    {
+        return string.Equals(_bar.Id, bar.Id, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal void RefreshFromConfiguration()
+    {
+        Title = $"{GetAppDisplayName()} - {_bar.Name}";
+        ApplyBarSettings();
     }
 
     internal void AddRuntimeWindow(DockItem item)
@@ -2176,22 +2192,43 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         DockItemsControl.Items.Refresh();
         ConfigureRunningIndicatorTimer();
-        if (!_bar.AutoHide)
-        {
-            ShowDock();
-        }
         PositionDock();
+        ApplyAutoHideStateAfterSettings();
     }
 
     private void ConfigureHideTimers()
     {
-        _autoHideTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(0, _bar.AutoHideDelayMs));
-        _popupTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(0, _store.Current.App.PopupOnMouseover ? _store.Current.App.PopupDelayMs : 0));
+        _autoHideTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, _bar.AutoHideDelayMs));
+        _popupTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, _store.Current.App.PopupOnMouseover ? _store.Current.App.PopupDelayMs : 0));
         if (!_bar.AutoHide)
         {
             _autoHideTimer.Stop();
             _popupTimer.Stop();
         }
+    }
+
+    private void ApplyAutoHideStateAfterSettings()
+    {
+        if (!_bar.AutoHide)
+        {
+            _isPointerInside = DockShell.IsMouseOver;
+            _isAutoHideRevealActive = false;
+            _autoHideTimer.Stop();
+            _popupTimer.Stop();
+            _autoHideEdgeTimer.Stop();
+            ShowDock(animated: false);
+            return;
+        }
+
+        if (DockShell.IsMouseOver)
+        {
+            _isPointerInside = true;
+            ShowDock(animated: false);
+            return;
+        }
+
+        _isPointerInside = false;
+        StartAutoHideCountdown();
     }
 
     private void ConfigureRunningIndicatorTimer()
@@ -2241,7 +2278,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_store.Current.App.PopupOnMouseover)
+        if (_store.Current.App.PopupOnMouseover && _store.Current.App.PopupDelayMs > 0)
         {
             _popupTimer.Start();
         }
@@ -2258,26 +2295,142 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_isAutoHideRevealActive && IsCursorInAutoHideRevealZone())
+        {
+            return;
+        }
+
         ResetHoverZoom();
+        _isAutoHideRevealActive = false;
         _isPointerInside = false;
         _popupTimer.Stop();
 
         if (_bar.AutoHide)
         {
-            _autoHideTimer.Start();
+            StartAutoHideCountdown();
         }
     }
 
-    private void ShowDock()
+    private void ShowDock(bool animated = true)
     {
+        _autoHideTimer.Stop();
+        _popupTimer.Stop();
+        _autoHideEdgeTimer.Stop();
+        var shouldAnimate = animated && _bar.AutoHide;
         _isDockHidden = false;
-        MoveToVisiblePosition(animated: _bar.AutoHide);
+        BeginAutoHideReveal(shouldAnimate);
+        MoveToVisiblePosition(animated: shouldAnimate);
+        if (shouldAnimate || DockShell.IsMouseOver)
+        {
+            StartHoverZoomFromCursor();
+        }
     }
 
     private void HideDock()
     {
+        if (_isPointerInside || (_isAutoHideRevealActive && IsCursorInAutoHideRevealZone()))
+        {
+            return;
+        }
+
+        _popupTimer.Stop();
+        _isAutoHideRevealActive = false;
+        ResetHoverZoom();
         _isDockHidden = true;
         MoveToHiddenPosition(animated: true);
+        StartAutoHideEdgeWatcher();
+    }
+
+    private void StartAutoHideCountdown()
+    {
+        _autoHideTimer.Stop();
+        if (!_bar.AutoHide || _isPointerInside)
+        {
+            return;
+        }
+
+        if (_bar.AutoHideDelayMs <= 0)
+        {
+            HideDock();
+            return;
+        }
+
+        _autoHideTimer.Start();
+    }
+
+    private void StartAutoHideEdgeWatcher()
+    {
+        if (_bar.AutoHide && _isDockHidden)
+        {
+            _autoHideEdgeTimer.Start();
+        }
+    }
+
+    private void MonitorAutoHideRevealEdge()
+    {
+        if (!_bar.AutoHide || !_isDockHidden)
+        {
+            _autoHideEdgeTimer.Stop();
+            _popupTimer.Stop();
+            return;
+        }
+
+        if (!IsCursorInAutoHideRevealZone())
+        {
+            _isPointerInside = false;
+            _popupTimer.Stop();
+            return;
+        }
+
+        _isPointerInside = true;
+        if (_store.Current.App.PopupOnMouseover && _store.Current.App.PopupDelayMs > 0)
+        {
+            if (!_popupTimer.IsEnabled)
+            {
+                _popupTimer.Start();
+            }
+            return;
+        }
+
+        ShowDock();
+    }
+
+    private bool IsCursorInAutoHideRevealZone()
+    {
+        if (!GetCursorPos(out var cursorPosition))
+        {
+            return false;
+        }
+
+        const int revealBand = 5;
+        var bounds = GetCurrentScreen().Bounds;
+        var x = cursorPosition.X;
+        var y = cursorPosition.Y;
+
+        return _bar.Edge switch
+        {
+            DockEdge.Bottom => y >= bounds.Bottom - revealBand &&
+                               x >= bounds.Left &&
+                               x <= bounds.Right,
+            DockEdge.Top => y <= bounds.Top + revealBand &&
+                            x >= bounds.Left &&
+                            x <= bounds.Right,
+            DockEdge.Left => x <= bounds.Left + revealBand &&
+                             y >= bounds.Top &&
+                             y <= bounds.Bottom,
+            DockEdge.Right => x >= bounds.Right - revealBand &&
+                              y >= bounds.Top &&
+                              y <= bounds.Bottom,
+            _ => false
+        };
+    }
+
+    private void BeginAutoHideReveal(bool animated)
+    {
+        _isAutoHideRevealActive = animated && _bar.AutoHideDurationMs > 0;
+        _autoHideRevealEndsAtUtc = _isAutoHideRevealActive
+            ? DateTime.UtcNow.AddMilliseconds(Math.Max(1, _bar.AutoHideDurationMs))
+            : DateTime.UtcNow;
     }
 
     private void MoveToVisiblePosition(bool animated)
@@ -2287,8 +2440,8 @@ public partial class MainWindow : Window
 
     private void MoveToHiddenPosition(bool animated)
     {
-        var area = GetCurrentWorkingArea();
-        const double visibleStrip = 6;
+        var area = GetCurrentScreen().Bounds;
+        const double visibleStrip = 2;
 
         var left = _visibleLeft;
         var top = _visibleTop;
@@ -2406,12 +2559,57 @@ public partial class MainWindow : Window
         _isHoverZoomSettling = true;
     }
 
+    private bool CanStartHoverZoom(MouseEventArgs e)
+    {
+        return _bar.ZoomEnabled &&
+               !_isReorderDragActive &&
+               e.LeftButton != MouseButtonState.Pressed &&
+               (!_bar.AutoHide || !_isDockHidden || _isAutoHideRevealActive);
+    }
+
+    private void StartHoverZoomFromCursor()
+    {
+        if (!_bar.ZoomEnabled || _isReorderDragActive || !GetCursorPos(out var cursorPosition))
+        {
+            return;
+        }
+
+        try
+        {
+            StartHoverZoom(DockItemsControl.PointFromScreen(new Point(cursorPosition.X, cursorPosition.Y)));
+        }
+        catch (Exception ex)
+        {
+            RuntimeLog.Write(ex, "StartHoverZoomFromCursor");
+        }
+    }
+
+    private void UpdateAutoHideRevealHoverPointer()
+    {
+        if (!_isAutoHideRevealActive)
+        {
+            return;
+        }
+
+        if (GetCursorPos(out var cursorPosition))
+        {
+            _hoverZoomPointer = DockItemsControl.PointFromScreen(new Point(cursorPosition.X, cursorPosition.Y));
+        }
+
+        if (DateTime.UtcNow >= _autoHideRevealEndsAtUtc)
+        {
+            _isAutoHideRevealActive = false;
+        }
+    }
+
     private void CompositionTarget_Rendering(object? sender, EventArgs e)
     {
         if (_isReorderDragActive)
         {
             UpdateReorderDragFrame();
         }
+
+        UpdateAutoHideRevealHoverPointer();
 
         if (!_isHoverZoomActive && !_isHoverZoomSettling)
         {
