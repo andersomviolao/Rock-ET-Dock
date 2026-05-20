@@ -11,8 +11,25 @@ public static class RunningApplicationService
 {
     private const int SwRestore = 9;
 
+    // Cache for GetRunningExecutablePaths to avoid scanning all processes on every hover/tick.
+    // The TTL keeps the result fresh enough for running-indicator accuracy without constant
+    // O(n) process enumeration. Protected by a lock because RefreshAsync can be called from
+    // the WinEvent thread and the UI thread simultaneously.
+    private static readonly object CacheLock = new();
+    private static ISet<string>? _runningPathsCache;
+    private static DateTimeOffset _cacheExpiry = DateTimeOffset.MinValue;
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(2);
+
     public static ISet<string> GetRunningExecutablePaths()
     {
+        lock (CacheLock)
+        {
+            if (_runningPathsCache is not null && DateTimeOffset.UtcNow < _cacheExpiry)
+            {
+                return _runningPathsCache;
+            }
+        }
+
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var process in Process.GetProcesses())
         {
@@ -24,6 +41,12 @@ public static class RunningApplicationService
                     paths.Add(NormalizePath(path));
                 }
             }
+        }
+
+        lock (CacheLock)
+        {
+            _runningPathsCache = paths;
+            _cacheExpiry = DateTimeOffset.UtcNow.Add(CacheTtl);
         }
 
         return paths;

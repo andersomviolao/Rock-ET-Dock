@@ -401,34 +401,10 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
 
     public void RefreshSettings()
     {
-        OnPropertyChanged(nameof(Orientation));
-        OnPropertyChanged(nameof(ItemButtonSize));
-        OnPropertyChanged(nameof(IconTileSize));
-        OnPropertyChanged(nameof(IconImageSize));
-        OnPropertyChanged(nameof(ItemMargin));
-        OnPropertyChanged(nameof(ItemContentMargin));
-        OnPropertyChanged(nameof(ItemContentOffsetY));
-        OnPropertyChanged(nameof(ShellCornerRadius));
-        OnPropertyChanged(nameof(TileCornerRadius));
-        OnPropertyChanged(nameof(LabelFontSize));
-        OnPropertyChanged(nameof(LabelMaxWidth));
-        OnPropertyChanged(nameof(ItemOpacity));
-        OnPropertyChanged(nameof(CrossAxisZoomOverhang));
-        OnPropertyChanged(nameof(PrimaryAxisZoomOverhang));
-        OnPropertyChanged(nameof(HorizontalZoomOverhang));
-        OnPropertyChanged(nameof(VerticalZoomOverhang));
-        OnPropertyChanged(nameof(ZoomOverhang));
-        OnPropertyChanged(nameof(DockShellMargin));
-        OnPropertyChanged(nameof(LabelVisibility));
-        OnPropertyChanged(nameof(ShellBackground));
-        OnPropertyChanged(nameof(ShellBorderBrush));
-        OnPropertyChanged(nameof(TileBackground));
-        OnPropertyChanged(nameof(TileBorderBrush));
-        OnPropertyChanged(nameof(SeparatorBrush));
-        OnPropertyChanged(nameof(SeparatorWidth));
-        OnPropertyChanged(nameof(SeparatorHeight));
-        OnPropertyChanged(nameof(ShadowOpacity));
-        OnPropertyChanged(nameof(LabelBrush));
+        // Passing string.Empty to PropertyChangedEventArgs signals WPF that all bindings on
+        // this object should re-evaluate. This replaces the previous explicit list of 27 property
+        // names and ensures any property added in the future is automatically covered.
+        OnPropertyChanged(string.Empty);
     }
 
     public void SetLanguage(string? language)

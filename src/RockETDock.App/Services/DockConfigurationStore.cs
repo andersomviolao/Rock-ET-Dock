@@ -59,7 +59,23 @@ public sealed class DockConfigurationStore
     {
         Directory.CreateDirectory(UserPaths.ConfigRoot);
         var json = JsonSerializer.Serialize(Current, _jsonOptions);
-        File.WriteAllText(UserPaths.ConfigFile, json);
+
+        // Write to a temp file first, then atomically replace the config file.
+        // This prevents a partial write from corrupting the config if the app is
+        // killed or crashes between opening and finishing the file write.
+        var tempPath = UserPaths.ConfigFile + ".tmp";
+        File.WriteAllText(tempPath, json);
+
+        if (File.Exists(UserPaths.ConfigFile))
+        {
+            // File.Replace is atomic on Windows (uses ReplaceFile internally).
+            File.Replace(tempPath, UserPaths.ConfigFile, null);
+        }
+        else
+        {
+            // Destination doesn't exist yet (first save); a simple move is fine.
+            File.Move(tempPath, UserPaths.ConfigFile);
+        }
     }
 
     private static DockConfiguration CreateDefault()

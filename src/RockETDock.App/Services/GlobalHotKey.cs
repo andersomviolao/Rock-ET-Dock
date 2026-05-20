@@ -13,6 +13,10 @@ public sealed class GlobalHotKey : IDisposable
     private const uint ModShift = 0x0004;
     private const uint ModWindows = 0x0008;
 
+    // 0x4A00 is an arbitrary base in the user-defined ID range (0x0000–0xBFFF).
+    // RegisterHotKey binds IDs to a specific window handle, so instances across
+    // different processes do not conflict with each other. Within this process,
+    // Interlocked.Increment guarantees each registration gets a unique ID.
     private static int s_nextId = 0x4A00;
 
     private readonly HwndSource _source;

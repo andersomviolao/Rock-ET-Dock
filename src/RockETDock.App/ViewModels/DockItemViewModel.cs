@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
@@ -39,9 +40,18 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
         _ => Item.DisplayName
     };
 
-    public string ShortLabel => DisplayName.Length <= 12
-        ? DisplayName
-        : DisplayName[..12];
+    // Uses StringInfo so the cut respects Unicode text elements: surrogate pairs (emoji,
+    // supplementary CJK) and combining sequences are never sliced in the middle.
+    public string ShortLabel
+    {
+        get
+        {
+            var info = new StringInfo(DisplayName);
+            return info.LengthInTextElements <= 12
+                ? DisplayName
+                : info.SubstringByTextElements(0, 12);
+        }
+    }
 
     public ImageSource Icon { get; }
 
